@@ -3,7 +3,7 @@ Basic Star Commands in RadSSH
 
 Most of the time, the text that you enter at a RadSSH prompt is sent to execute on remote nodes. Sometimes during a session, it is useful to issue commands that instruct RadSSH to perform something other than its normal command dispatching. Starting any command with an asterisk (``*``) will enable this behavior, and RadSSH will attempt to interpret what special behavior or operation is requested.
 
-This mechanism of intercepting StarCommands operates not only with the colleciton of RadSSH built-in commands, but can be extended by user PlugIns. For details on coding PlugIns to add (or replace) StarCommands, see :doc:`Developing PlugIns`.
+This mechanism of intercepting StarCommands operates not only with the colleciton of RadSSH built-in commands, but can be extended by user PlugIns. For details on coding PlugIns to add (or replace) StarCommands, see :doc:`plugin_developer_guide`.
 
 Here is a brief summary of the RadSSH built-in StarCommands:
 

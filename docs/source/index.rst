@@ -49,6 +49,9 @@ Supplemental to the RadSSH Shell, the following command line utilities are avail
  - radssh.config
     Print a default configuration template to the console. To assist in creating a customized configuration settings file, run **python -m radssh.config > ~/.radssh_config**, and then edit the ``~/.radssh_config`` file and uncomment the lines to change the default settings.
 
+ - radssh.plugins
+    Utility to list available plugins, or install plugin modules from a single source file or all modules from a directory. Installation to the system directory will likely require administrative (root) rights.
+
  - radssh.pkcs
     Utility to use RSA key to encrypt/decrypt. See :ref:`pkcs` for details.
 

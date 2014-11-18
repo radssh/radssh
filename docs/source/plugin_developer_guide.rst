@@ -1,3 +1,5 @@
+.. _DevelopingPlugIns:
+
 Developing RadSSH Plugins
 =========================
 

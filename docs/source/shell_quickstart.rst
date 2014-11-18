@@ -3,7 +3,7 @@ RadSSH Shell - Your First Session
 
 Start here if you want to jump right in!
 
-To test if RadSSH is properly installed with all prerequisites, you can run: ``python -m radssh`` (If you get an error stating that radssh is a package and can not be directly executed, your Python is likely version 2.6, and you should run ``python -m radssh.__main__`` instead). You should see a short output summary of RadSSH, along with version information on RadSSH itself, and the Paramiko and PyCrypto modules that it depends on. If you get errors, there is a problem with the installation, and you should resolve it : see :doc:`Installation Guide`.
+To test if RadSSH is properly installed with all prerequisites, you can run: ``python -m radssh`` (If you get an error stating that radssh is a package and can not be directly executed, your Python is likely version 2.6, and you should run ``python -m radssh.__main__`` instead). You should see a short output summary of RadSSH, along with version information on RadSSH itself, and the Paramiko and PyCrypto modules that it depends on. If you get errors, there is a problem with the installation, and you should resolve it : see :doc:`installation`.
 
 If the main module summary is functioning, you should be ready to go!
 
@@ -47,7 +47,7 @@ The connection progress line of dots, with maybe a few X's and O's, is intention
 
 The names display along with the elapsed time taken to connect and authenticate, as well as the authenticated username and remote IP address of the socket connection. Any problem connections will appear grouped at the end of the list, and include information about what specifically prevented the connection or authentication. In our example, RadSSH failed to establish a connection to ``scrooge`` because it is not a known host. RadSSH does not treat this as a critical error; commands will not be run on ``scrooge`` unless it is later reconnected and authenticated. The list entry for ``scrooge`` is kept as a dormant connection.
 
-``*info`` is one of many available meta-commands, or StarCommands available when using RadSSH. All command lines that begin with ``*`` are never invoked on the remote hosts; instead these are handled within RadSSH itself, or a RadSSH plugin. For details, see :doc:`Star Commands`
+``*info`` is one of many available meta-commands, or StarCommands available when using RadSSH. All command lines that begin with ``*`` are never invoked on the remote hosts; instead these are handled within RadSSH itself, or a RadSSH plugin. For details, see :doc:`star_commands`
 
 Running Some Basic Commands
 ---------------------------
