@@ -1,0 +1,44 @@
+# Copyright (c) 2014 LexisNexis Risk Data Management Inc.
+#
+# This file is part of the RadSSH software package.
+#
+# RadSSH is free software, released under the Revised BSD License.
+# You are permitted to use, modify, and redsitribute this software
+# according to the Revised BSD License, a copy of which should be
+# included with the distribution as file LICENSE.txt
+#
+
+Requires Python 2.6+ (maybe 2.5+), so CentOS 5 is not supported for running the utility, but is for connecting as destination hosts. You will also need to have Paramiko and netaddr modules available (CentOS6 RPM names python-paramiko-1.7.5-2.1.el6.noarch &  python-netaddr-0.7.5-4.el6.noarch) Paramiko should in turn have a dependency on PyCrypto. 
+
+Since I restructured it as a source distributable module, you should also get python-setuptools-0.6.10-3.el6.noarch if you don't already have it. Installation as a system level module is done with:
+cd radssh
+sudo python setup.py install
+
+That should be it as far as installation and setup.
+
+Running the shell:
+	python -m radssh.shell host1 host2 host3 host4 ...
+
+On first run, if you don't already have a ~/.genesisshrc file (yeah, this should be renamed to .radssh.rc or something), it will create one with commented out settings. You can later setup your own custom settings based on that template. Recommend setting the username and authfile , and manually create the authfile to jam in the passwords and/or key files that you want to use for longer term setup.
+
+Even if you have no .rc file and no authfile configured, it will default to the current username, and if you have no keys or agent, it will prompt for a password for the user. Even if the initial username is bad, you can go ahead and make the network connections and allow the authentication to fail. You can try alternate usernames (and passwords, but not keys) by entering "*auth root" at the shell $ prompt. Plain "*auth" will use the default username, explicitly adding a name (root) will attempt authentication as that user. The *auth will skip any connections that are already connected and authenticated, so this can be used in an environment where you for some reason have many different passwords to try.
+
+Once connected and authenticated, commands typed at the $ prompt will be issued to all "live" hosts (connected, authenticated, and enabled).
+
+Basic caveats:
+•	Typing "exit" at the prompt will run "exit" on all the remote nodes, and report on the results. To exit the shell, hit Ctrl-D
+•	Even though it may look like a persistent shell, each command line entered is independent, and there is no persistence of state. You are able to cd to a directory, but on a subsequent command line, you will revert back to starting in the home directory.  You can do compound commands, but you are not in a real bash environment where cd persists.
+•	Command line history works, and is saved across sessions, much like bash command line history. Up/down arrow, and Ctrl-R search.
+•	Command line completion does NOT work (yet?)
+•	You don't have a TTY on the remote systems. Running a command that requires interactive keyboard input will not behave well. The shell does attempt to recognize many "problem" commands like vi, and block them. It will also require confirmation for another subset of potentially dangerous commands (especially dangerous if the user forgets that they may be connected to hundreds of hosts simultaneously) like shutdown and rm. Neither of these lists should be considered comprehensive.
+ 
+Starting tips:
+•	Familiarize yourself with *info, *status, and *result
+•	The window (or tab) title bar should show completion status for running commands. To kill a running command, Ctrl-C will need to be hit twice in rapid succession. A single-hit of Ctrl-C will only report the list of nodes that have not completed – the second one also does not really kill the process, it just detches the shell from waiting on them, and gets your prompt back.
+•	Running commands with huge volumes of output is bad when magnified by 100x or more for large clusters. Try to limit commands to things that you know won't produce so much output.
+•	Even with moderate output volume, *lines, *words, and *grep can be extremely handy to use
+•	If you have a short bash (or python or perl) script, you can use "*run name_of_local_script" and the shell will push out a copy from the local host to all the nodes and run it. Be sure to debug your script locally before running 100 copies of it.
+•	Each session, by default, creates its own logging directory for session commands, and each node's stdout and stderr. You can review these files after the fact.
+•	*get can conveniently pull files from all hosts, but should only be used for small files. It is a hack that runs cat on the remote nodes and captures the streamed output. This should probably be redone as a reverse of...
+•	*sftp can push a local file out to all the remote hosts. It actually uses an independent SFTP session across the existing SSH transport, and is respectable performance-wise. 	
+

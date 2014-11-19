@@ -1,0 +1,10 @@
+#!/bin/bash
+# Installer script for environments without pip
+
+if [ $UID -ne 0 ]; then
+	SUDO="sudo"
+else
+	SUDO=""
+fi
+
+$SUDO python setup.py install
