@@ -40,6 +40,7 @@ Contents:
 
     shell
     shell_quickstart
+    config_settings
     star_commands
     additional_star_commands
 
