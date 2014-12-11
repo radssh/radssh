@@ -79,23 +79,30 @@ class HostKeyVerifier(object):
         '''Verify a single hostkey against a hostname or IP'''
         if self.mode == verify_mode.ignore:
             return True
+        # Special formatting for non-standard ports...
+        if not ':' in hostname:
+            lookup_name = hostname
+        elif hostname.endswith(':22'):
+            lookup_name = hostname[:-3]
+        else:
+            host_base, port_base = hostname.rsplit(':', 1)
+            lookup_name = '[%s]:%s' % (host_base, port_base)
         # Try remainder of host verification with locking
         self.lock.acquire()
-        if self.hostkeys.check(hostname, key):
+        if self.hostkeys.check(lookup_name, key):
             self.lock.release()
             return True
-        host_entry = self.hostkeys.lookup(hostname)
+        host_entry = self.hostkeys.lookup(lookup_name)
         actual = printable_fingerprint(key)
         if host_entry and key.get_name() in host_entry:
             # Entry mismatch
-            print(host_entry)
             expected = printable_fingerprint(host_entry[key.get_name()])
-            print('Host key mismatch for (%s)' % hostname)
+            print('Host key mismatch for (%s)' % lookup_name)
             print('Expected:', expected)
             print('Got     :', actual)
             if self.mode == verify_mode.overwrite_blindly:
-                print('Blindly accepting updated host key for %s' % hostname)
-                self.hostkeys.add(hostname, key.get_name(), key)
+                print('Blindly accepting updated host key for %s' % lookup_name)
+                self.hostkeys.add(lookup_name, key.get_name(), key)
                 self.hostkeys.save(self.known_hosts_file)
                 self.lock.release()
                 return True
@@ -106,7 +113,7 @@ class HostKeyVerifier(object):
                 return False
             accept_and_add = False
             if self.mode == verify_mode.prompt:
-                print('Unverified connection to "%s"' % hostname)
+                print('Unverified connection to "%s"' % lookup_name)
                 print('(Host Key Fingerprint [%s])' % actual)
                 answer = raw_input('Do you want to accept this key? (y/N): ')
                 if answer[0].upper() == 'Y':
@@ -114,8 +121,8 @@ class HostKeyVerifier(object):
             if self.mode in (verify_mode.accept_new, verify_mode.overwrite_blindly):
                 accept_and_add = True
             if accept_and_add:
-                print('Accepting new host key for %s' % hostname)
-                self.hostkeys.add(hostname, key.get_name(), key)
+                print('Accepting new host key for %s' % lookup_name)
+                self.hostkeys.add(lookup_name, key.get_name(), key)
                 self.hostkeys.save(self.known_hosts_file)
                 self.lock.release()
                 return True
