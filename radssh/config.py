@@ -115,7 +115,7 @@ force_tty.signon=term length 0
 force_tty.signoff=term length 20
 
 # Should RadSSH initially send auth_none request (needed for OpenSSH 4.3 banner)
-try_auth_none=on
+try_auth_none=off
 '''
 
 if sys.version_info[:2] == (2, 7):

@@ -243,7 +243,10 @@ class AuthManager(object):
                 except AttributeError:
                     pass
 
-        if 'password' in server_authtypes_supported:
+        # Attempt password if applicable. Include keyboard-interactive as well,
+        # since it typically works with fallback, and we don't currently handle
+        # full scope of keyboard-interactive (yet)
+        if 'password' in server_authtypes_supported or 'keyboard-interactive' in server_authtypes_supported:
             if not connected:
                 connected = self.try_auth(T, self.passwords, True)
             # Final step - try a default password (unfiltered)
