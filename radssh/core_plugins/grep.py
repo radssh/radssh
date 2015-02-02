@@ -25,6 +25,10 @@ def star_grep(cluster, logdir, cmdline, *args):
             for line_number, line in enumerate(res.stdout.split('\n'), 1):
                 if pattern in line:
                     print('%s [%d]: %s' % (host, line_number, line.rstrip()))
+            # Do a second pass through stderr, so matching lines can be tagged
+            for line_number, line in enumerate(res.stderr.split('\n'), 1):
+                if pattern in line:
+                    print('%s [%d/stderr]: %s' % (host, line_number, line.rstrip()))
 
 
 def star_match(cluster, logdir, cmdline, *args):
@@ -45,7 +49,7 @@ def star_match(cluster, logdir, cmdline, *args):
         job = cluster.last_result.get(host)
         if job:
             res = job.result
-            if include_host(pattern, res.stdout):
+            if include_host(pattern, res.stdout + res.stderr):
                 enable_list.append(str(host))
     cluster.enable(enable_list)
 
