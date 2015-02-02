@@ -34,12 +34,15 @@ def lookup(label):
     for host in g.query(label[8:]):
         ip = g.getattrval('ip', host)
         fqdn = g.getattrval('fqdn', host)
+        port = g.getattrval('port', host)
+        if not port:
+            port = '22'
         if ip:
-            matches.append((host, ip, None))
+            matches.append((host, ip + ':' + port, None))
         elif fqdn:
-            matches.append((host, fqdn, None))
+            matches.append((host, fqdn + ':' + port, None))
         else:
-            matches.append((host, host, None))
+            matches.append((host, host + ':' + port, None))
     return iter(matches)
 
 
