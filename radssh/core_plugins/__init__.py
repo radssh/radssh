@@ -104,7 +104,7 @@ class StarCommand(object):
     if help flags are discovered on the command line or if the parameter count
     is out of range.
     '''
-    def __init__(self, handler, synopsis=None, help_text=None, auto_help=True, min_args=0, max_args=None, version=None):
+    def __init__(self, handler, synopsis=None, help_text=None, auto_help=True, min_args=0, max_args=None, version=None, tab_completion=None):
         self.handler = handler
         if synopsis:
             self.synopsis = synopsis
@@ -122,6 +122,7 @@ class StarCommand(object):
         self.min_args = min_args
         self.max_args = max_args
         self.version = version
+        self.tab_completion = tab_completion
 
     def __call__(self, cluster, logdir, cmd, *args):
         # Bypass calling if auto-help or if argument count out of range

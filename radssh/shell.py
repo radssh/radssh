@@ -217,19 +217,41 @@ class radssh_tab_handler(object):
             self.completion_choices.append(None)
         return self.completion_choices[state]
 
+    def complete_local_path(self, lead_in, text, state):
+        if state == 0:
+            del self.completion_choices[:]
+            parent = os.path.dirname(lead_in)
+            partial = os.path.basename(lead_in)
+            if not parent:
+                parent = './'
+            for x in os.listdir(parent):
+                if x.startswith(partial):
+                    full_path = os.path.join(parent, x)
+                    if os.path.isdir(full_path):
+                        # See if target is a directory, and append '/' if it is
+                        x += '/'
+                        full_path += '/'
+                    if self.using_libedit:
+                        self.completion_choices.append(full_path)
+                    else:
+                        self.completion_choices.append(x)
+            self.completion_choices.append(None)
+        return self.completion_choices[state]
+
     def complete(self, text, state):
         buffer = readline.get_line_buffer()
         lead_in = buffer[:readline.get_endidx()].split()[-1]
         try:
+            if buffer.startswith('*') and ' ' in buffer:
+                # See if *command has custom tab completion
+                star_command = self.star.commands.get(buffer.split()[0], None)
+                if star_command and star_command.tab_completion:
+                    return star_command.tab_completion(self, buffer, lead_in, text, state)
             if lead_in.startswith('*'):
                 # User needs help completing *command...
                 return self.complete_star_command(lead_in, text, state)
-            elif os.path.sep in lead_in:
-                # Absolute or relative path, get from remote host in cluster
-                return self.complete_remote_path(lead_in, text, state)
             else:
-                # Originally was local executable completion via $PATH, but
-                # seems to be more sensible to be remote path completion
+                # Default behavior - remote file path completion
                 return self.complete_remote_path(lead_in, text, state)
         except Exception as e:
             raise

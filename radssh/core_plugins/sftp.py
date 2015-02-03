@@ -41,6 +41,8 @@ import os
 import stat
 import tempfile
 
+from radssh.plugins import StarCommand
+
 
 def sftp(cluster, logdir, cmd, *args):
     '''SFTP put a local file on cluster nodes'''
@@ -91,8 +93,17 @@ def propagate_file(cluster, logdir, cmd, *args):
     cluster.sftp(tempname, path, attrs)
     os.remove(tempname)
 
+
+def custom_completer(completer, buffer, lead_in, text, state):
+    words = buffer.split()
+    # Shift to local path completion only for the 1st parameter (2nd arg)
+    if len(words) == 2:
+        return completer.complete_local_path(lead_in, text, state)
+    return completer.complete_remote_path(lead_in, text, state)
+
+
 star_commands = {
-    '*sftp': sftp,
-    '*run': script_file_runner,
+    '*sftp': StarCommand(sftp, tab_completion=custom_completer),
+    '*run': StarCommand(script_file_runner, tab_completion=custom_completer),
     '*propagate': propagate_file
 }
