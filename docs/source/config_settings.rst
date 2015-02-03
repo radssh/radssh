@@ -87,8 +87,8 @@ General Settings
     Have RadSSH intercept possibly dangerous commands (extremely dangerous if mistakenly run on hundreds of servers simultaneously) and require explicit confirmation that the user intends to do precisely what was typed in.
  - paramiko_log_level (default: 40)
     Set to lower numbers to increase logging output of paramiko low-level SSH operations.
- - try_auth_none (default: on)
-    Perform a initial authentication probing request to determine whether the remote host accepts keys or passwords, or both. May need to set to **off** for some remote SSH implementations, like Cisco switches.
+ - try_auth_none (default: off)
+    Perform a initial authentication probing request to determine whether the remote host accepts keys or passwords, or both. Setting to **on** may improve connection speeds by bypassing unsupported authentication attempts, but use caution, as some remote SSH implementations, like Cisco switches will abruptly drop connection if auth-none is attempted.  OpenSSH on RHEL/CentOS 5 will fail to send a banner unless auth-none is attempted.
  - force_tty=Cisco,force10networks
     Set to a comma separated list of SSH host identifiers for connections that do not support SSH exec_command. This triggers a secondary, less reliable command invocation that runs commands through a dedicated tty session. Both Cisco and Force10 switches have been identified as requiring RadSSH operate in this mode; there may be others.
  - force_tty.signon (default: "term length 0")

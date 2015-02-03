@@ -62,12 +62,7 @@ def start_thread(event):
 
 if __name__ == '__main__':
     print('RadSSH Main Module')
-    # If we have SVN info, provide more detail, otherwise fallback to basic
-    try:
-        rev, datestamp, timestamp = radssh._svn_info.split()[2:5]
-        print('Package RadSSH %s [r%s @ %s %s] from (%s)' % (radssh.version, rev, datestamp, timestamp, radssh.__file__))
-    except Exception as e:
-        print('Package RadSSH %s from (%s)' % (radssh.version, radssh.__file__))
+    print('Package RadSSH %s from (%s)' % (radssh.version, radssh.__file__))
     # Dependent modules - Print version and location
     print('  Using Paramiko ', paramiko.__version__, 'from', paramiko.__file__)
     print('  Using PyCrypto', Crypto.__version__, 'from', Crypto.__file__)

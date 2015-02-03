@@ -50,16 +50,16 @@ Based on results of the most recently run command, either output or exit status,
   Enable hosts that returned success (status code 0) from the most recently run command. Equivalent to **\*err 0**.
 
 \*match text
-  Enable hosts that contain "text" in the command output (stdout, not stderr) from the most recently run command.
+  Enable hosts that contain "text" in the command output (stdout, not stderr) from the most recently run command. As of 1.0.1, stderr content is included in the search.
 
 \*nomatch text
-  The logical inverse of \*match. Enables the hosts that DO NOT contain "text" in the output of the most recently run command.
+  The logical inverse of \*match. Enables the hosts that DO NOT contain "text" in the output of the most recently run command. As of 1.0.1, stderr content is included in the search.
 
 Searching Through Command Output
 --------------------------------
 
 \*grep text
-  Print matching lines (and line numbers) from the most recently run command. This does not change the enabled set of hosts. Despite the name "grep", this does not match on regular expressions. 
+  Print matching lines (and line numbers) from the most recently run command. This does not change the enabled set of hosts. Despite the name "grep", this does not match on regular expressions.  As of 1.0.1, stderr content is included in the search.
 
 \*lines
   Print unique lines of output from all hosts from the most recently run command. Prints counts and sorts based on frequency (high to low).

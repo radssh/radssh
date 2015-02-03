@@ -15,9 +15,7 @@ RadSSH - SSH parallel pseudo-shell and toolkit
 
 from __future__ import print_function  # Requires Python 2.6 or higher
 
-_svn_info = "$Id: __init__.py 5239 2014-12-03 16:07:48Z paul $"
-
-version_info = (1, 0, 0)
+version_info = (1, 0, 1)
 version = '.'.join([str(x) for x in version_info])
 
 __author__ = 'Paul Kapp'
