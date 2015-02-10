@@ -61,7 +61,7 @@ setup(name='radssh',
       url='https://github.com/radssh/radssh',
       # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
-          'Development Status :: 4 - Beta',
+          'Development Status :: 5 - Production/Stable',
           'Environment :: Console',
           'Intended Audience :: System Administrators',
           'Intended Audience :: Developers',
