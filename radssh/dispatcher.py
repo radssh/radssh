@@ -81,6 +81,7 @@ class Dispatcher(object):
         self.requests = 0
         self.thread_sequence = count()
         self.job_sequence = count()
+        self.terminated = threading.Event()
         if dynamic_expansion:
             # Start a few threads now, submit will dynamically grow if needed
             self.dynamic = True
@@ -91,6 +92,8 @@ class Dispatcher(object):
 
     def start_threads(self, num=1):
         '''Grow the threadpool by the requested size, up to limit threadpool_size, set in __init__()'''
+        if self.terminated.is_set():
+            return
         while num > 0 and len(self.workers) < self.threadpool_size:
             thr = threading.Thread(target=generic_dispatch, args=(self.inQ, self.outQ))
             thr.setDaemon(True)
@@ -105,6 +108,8 @@ class Dispatcher(object):
     def submit(self, handler, *args, **kwargs):
         if not callable(handler):
             raise TypeError('Cannot use %r as dispatch handler' % handler)
+        if self.terminated.is_set():
+            raise RuntimeError('Dispatcher has been terminated: Unable to submit calls')
         if self.dynamic and self.inQ.size() > 1:
             # Start a few more worker threads if we are backlogged
             self.start_threads(3)
@@ -114,12 +119,13 @@ class Dispatcher(object):
         return job_id
 
     def wait(self):
-        self.inQ.join()
-        self.requests = 0
+        if not self.terminated.is_set():
+            self.inQ.join()
+            self.requests = 0
 
     def async_results(self, timeout=3):
         '''Poll for results - can be used as iterator'''
-        if not self.outQ:
+        if not self.outQ or self.terminated.is_set():
             raise StopIteration
         while self.inQ.unfinished_tasks:
             # Results still coming in
@@ -136,3 +142,21 @@ class Dispatcher(object):
             except queue.Empty:
                 self.wait()
                 break
+
+    def terminate(self):
+        '''Clenup a Dispatcher as best as we can'''
+        # Should only be called when a dispatched thread call goes so wrong that
+        # it is unable to self-poll and return/timeout on its own, as in flaky connection
+        # requests. exec_command calls can check the user_abort event when socket reads
+        # from stdout/stderr timeout. When interrupting connection_worker thread loops,
+        # it is necessary to construct a new Dispatcher object with fresh queues and thread
+        # pool, since the lost connection thread(s) will prevent the join()/wait() and
+        # unfinished_tasks from behaving properly, and it is more straightforward to
+        # abandon the Dispacher than deal with a future outQ object eventually showing up
+        # when we least expect it.
+        # Set the terminated flag, and put a bunch of None objects into inQ to trigger the
+        # non-blocked threads to terminate cleanly. Other resource cleanup may be added later,
+        # but stopping whatever threads we can is top priority.
+        self.terminated.set()
+        for thr in self.workers:
+            self.inQ.put(None)

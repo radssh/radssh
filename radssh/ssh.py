@@ -382,6 +382,23 @@ class Cluster(object):
                 break
             except UnfinishedJobs as e:
                 self.console.message(e.message, 'STALLED')
+            except KeyboardInterrupt:
+                self.console.message('Aborting %d pending connections' % len(self.pending), 'Ctrl-C')
+                for label in self.pending.values():
+                    self.console.message(label, 'FAILED CONNECTION')
+                    self.connections[label] = Exception('Failed to connect/Ctrl-C')
+                self.pending.clear()
+                # Blocked threads can cause issues with internal recordkeeping of Dispatcher
+                # object, and havoc if the thread ever unblocks and sends a completion message
+                # via outQ when async_results are used for another batch of jobs. Safest
+                # thing in this case is to abandon the Dispatcher blocked on connection
+                # results, and begin the session with a new Dispatcher object for
+                # the exec_command calls. The terminate() call will safely terminate the
+                # unblocked threads, freeing some resources for the new Dispatcher.
+                self.dispatcher.terminate()
+                new_dispatcher = Dispatcher(outQ=queue.Queue(), threadpool_size=self.dispatcher.threadpool_size)
+                self.dispatcher = new_dispatcher
+                break
         self.console.progress('\n')
         self.console.status('Ready')
 
