@@ -722,6 +722,24 @@ class Cluster(object):
                 bad.append((k, '(%8.3fs) %s' % (connect_time, str(t))))
         return good + bad
 
+    def connection_summary(self):
+        '''Determine counts of various connection statuses'''
+        ready = disabled = failed_auth = failed_connect = dropped = 0
+        for k, t in self.connections.items():
+            if isinstance(t, paramiko.Transport):
+                if not t.is_active():
+                    dropped += 1
+                elif not t.is_authenticated():
+                    failed_auth += 1
+                else:
+                    if k in self.disabled:
+                        disabled += 1
+                    else:
+                        ready += 1
+            else:
+                failed_connect += 1
+        return (ready, disabled, failed_auth, failed_connect, dropped)
+
     def locate(self, s):
         '''Lookup cluster entry - keys may be netaddr.IPAddress, not string'''
         # Trivial case, string to string match

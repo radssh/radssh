@@ -398,6 +398,18 @@ def radssh_shell_main():
     cluster = ssh.Cluster(hosts, auth=a, console=console, defaults=defaults)
     if defaults['verbose'] == 'on':
         star.star_info(cluster, logdir, '', [])
+    else:
+        # If cluster is not 100% connected, let user know even if verbose is not on
+        ready, disabled, failed_auth, failed_connect, dropped = cluster.connection_summary()
+        if any((failed_auth, failed_connect, dropped)):
+            print('There were problems connecting to some nodes:')
+            if failed_connect:
+                print('    %d nodes failed to connect' % failed_connect)
+            if failed_auth:
+                print('    %d nodes failed authentication' % failed_auth)
+            if dropped:
+                print('    %d dropped connections' % dropped)
+            print ('    Use "*info" for connection details.')
 
     # Command line history support
     if defaults.get('historyfile'):
