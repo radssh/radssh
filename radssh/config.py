@@ -154,6 +154,7 @@ def deprecated_check(d, filename=None):
             warnings.warn('DEPRECATED: [%s] found in %s is ignored.\n\t%s' % (k, filename, deprecated[k]))
             d.pop(k)
 
+
 def load_default_settings():
     '''Load just the default settings, ignoring system and user settings files'''
     # Start with the default_config settings from the module
@@ -195,8 +196,8 @@ def load_settings(cmdline_args=[]):
             cmdline_args.remove(arg)
     # Fill username in from environments if not supplied from configuration source(s)
     if 'username' not in settings:
-        settings['username'] = os.environ.get('SSH_USER', 
-            os.environ.get('USER', os.environ.get('USERNAME', 'default')))
+        settings['username'] = os.environ.get(
+            'SSH_USER', os.environ.get('USER', os.environ.get('USERNAME', 'default')))
     return settings
 
 

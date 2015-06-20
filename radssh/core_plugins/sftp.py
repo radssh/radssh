@@ -43,6 +43,12 @@ import tempfile
 
 from radssh.plugins import StarCommand
 
+# Add a settings dict so user can override plugin rutime parameters
+settings = {
+    'temp_dir': '/tmp',
+    'script_exec': 'bash -c "%s"'
+}
+
 
 def sftp(cluster, logdir, cmd, *args):
     '''SFTP put a local file on cluster nodes'''
@@ -60,9 +66,11 @@ def script_file_runner(cluster, logdir, cmd, *args):
     if not (st.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)):
         raise RuntimeError('Script file %s not executable' % args[0])
     srcfile = args[0]
-    dstfile = os.path.join('/tmp/', os.path.basename(args[0]))
+    dstfile = os.path.join(settings['temp_dir'], os.path.basename(args[0]))
     sftp(cluster, logdir, cmd, srcfile, dstfile)
     remote_cmd = '%s %s' % (dstfile, ' '.join(args[1:]))
+    if settings['script_exec']:
+        remote_cmd = settings['script_exec'] % remote_cmd
     cluster.run_command(remote_cmd)
     if logdir:
         cluster.log_result(logdir)

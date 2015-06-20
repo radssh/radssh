@@ -88,7 +88,7 @@ def _importKey(filename, allow_prompt=True, logger=None):
         # Need passphrase for RSA key
         if not allow_prompt:
             raise
-        retries=3
+        retries = 3
         while retries:
             try:
                 passphrase = getpass.getpass('Enter passphrase for RSA key [%s]: ' % filename)
@@ -115,7 +115,7 @@ def _importKey(filename, allow_prompt=True, logger=None):
         # Need passphrase for DSA key
         if not allow_prompt:
             raise
-        retries=3
+        retries = 3
         while retries:
             try:
                 passphrase = getpass.getpass('Enter passphrase for DSA key [%s]: ' % filename)
@@ -341,7 +341,7 @@ class AuthManager(object):
                     except Exception as e:
                         self.logger.debug('Unusable password value (%s): [%s]', str(e), repr(value))
                         continue
-              
+
                     self.logger.debug('Trying password (%s) for %s', '*' * len(key), T.getpeername()[0])
                     # Quirky Force10 servers seem to request further password attempt
                     # for a second stage - retry password as long as it is listed as an option

@@ -37,7 +37,7 @@ import traceback
 
 # Avoid having PowmInsecureWarning show on stderr every time
 with warnings.catch_warnings(record=True) as paramiko_load_warnings:
-	import paramiko
+    import paramiko
 
 from . import ssh
 from . import config
@@ -273,7 +273,7 @@ def radssh_shell_main():
 
     # Setup Logging
     logformat = '%(asctime)s %(levelname)-8s [%(name)s:%(thread)08X] %(message)s'
-    logdir = os.path.expanduser(time.strftime(defaults.get('logdir','')))
+    logdir = os.path.expanduser(time.strftime(defaults.get('logdir', '')))
     if logdir:
         if not os.path.exists(logdir):
             os.mkdir(logdir)
@@ -326,6 +326,12 @@ def radssh_shell_main():
                     if hasattr(this_plugin, 'star_commands'):
                         logger.debug('Registering *commands for plugin: %s %s', plugin, this_plugin.star_commands.keys())
                         star.commands.update(this_plugin.star_commands)
+                    if hasattr(this_plugin, 'settings'):
+                        prefix = 'plugin.%s.' % plugin
+                        user_settings = {}
+                        user_settings = dict([(k[len(prefix):], v) for k, v in defaults.items() if k.startswith(prefix)])
+                        logger.info('Updating settings for plugin %s with: %s', plugin, user_settings)
+                        this_plugin.settings.update(user_settings)
                     if hasattr(this_plugin, 'command_listener'):
                         command_listeners.append(this_plugin.command_listener)
                     loaded_plugins[plugin] = this_plugin
