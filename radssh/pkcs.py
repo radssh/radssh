@@ -116,8 +116,8 @@ class PKCS_OAEP(object):
         '''Decrypt ciphertext passed in as a base64 encoded string back into plaintext'''
         try:
             data = base64.b64decode(ciphertext)
-        except ValueError:
-            raise PKCSError('Ciphertext not base64 encoded')
+        except Exception as e:
+            raise PKCSError('Ciphertext cannot be base64 decoded: %s' % str(e))
         return self.decrypt_binary(data).decode()
 
 __all__ = ['PKCSError', 'PKCS_OAEP']

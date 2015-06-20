@@ -25,6 +25,7 @@ import fnmatch
 import netaddr
 import re
 import getpass
+import logging
 try:
     import queue
 except ImportError:
@@ -138,14 +139,17 @@ def connection_worker(host, conn, auth, key_verifier=None):
         # Socket (or sock-like) which is a probably a tunneled connection
         t = paramiko.Transport(conn)
         t.setName(host)
+    t.set_log_channel('radssh.paramiko')
     try:
         if key_verifier:
             if not t.is_active():
                 t.start_client()
             valid = key_verifier.verify_host_key(str(host), t.get_remote_server_key())
             if not valid:
+                logging.getLogger('radssh').warning('Host failed SSH key validation: %s' % host)
                 raise Exception('Host failed SSH key validation: %s' % host)
     except Exception as e:
+        logging.getLogger('radssh').error('Unable to verify host key for %s\n%s', host, repr(e))
         print('Unable to verify host key for', host)
         print(repr(e))
         t.close()
@@ -258,6 +262,7 @@ def exec_command(host, t, cmd, quota, streamQ):
             s.close()
         stdout.close()
         if stdout.discards:
+            logging.getLogger('radssh').warning('StreamBuffer encountered %d discards', stdout.discards)
             process_completion += 'StreamBuffer encountered %d discards' % stdout.discards
         stderr.close()
         return CommandResult(command=cmd, return_code=return_code, status=process_completion, stdout=stdout.buffer, stderr=stderr.buffer)
@@ -421,6 +426,8 @@ class Cluster(object):
         for k, t in self.connections.items():
             if isinstance(t, paramiko.Transport) and t.is_authenticated():
                 continue
+            if isinstance(t, paramiko.Transport) and t.is_active():
+                t.close()
             self.console.message(str(k), 'RECONNECT')
             conn = None
             try:

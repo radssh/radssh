@@ -31,6 +31,7 @@ import sys
 import threading
 import pprint
 import traceback
+import logging
 
 from .ssh import CommandResult
 from .plugins import StarCommand
@@ -308,7 +309,7 @@ commands = {
 }
 
 
-def call(cluster, logdir, cmd, verbose=False):
+def call(cluster, logdir, cmd):
     '''*command caller'''
     try:
         args = cmd.split()
@@ -319,7 +320,7 @@ def call(cluster, logdir, cmd, verbose=False):
             StarCommand(star_help)(cluster, logdir, cmd)
             return None
     except Exception as e:
-        if verbose:
-            print(traceback.format_exc())
-        else:
-            print(repr(e))
+        logger = logging.getLogger('radssh')
+        logger.error('Invoking *command failed: %s', repr(e))
+        logger.debug(traceback.format_exc())
+        print('Invoking *command failed:', repr(e))

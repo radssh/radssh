@@ -22,8 +22,11 @@ import warnings
 import getpass
 import fnmatch
 import threading
+import logging
+import base64
 
-import paramiko
+with warnings.catch_warnings(record=True):
+    import paramiko
 import netaddr
 
 from .pkcs import PKCS_OAEP, PKCSError
@@ -51,7 +54,8 @@ class RSAES_OAEP_Text(object):
     decoder_ring = PKCS_OAEP()
 
     def __init__(self, ciphertext):
-        self.ciphertext = ciphertext
+        # Do base64 decode at load time - no sense deferring that potential error
+        self.ciphertext = base64.b64decode(ciphertext)
         self.plaintext = None
         # Use a lock to avoid multiple threads decrypting
         self.lock = threading.Lock()
@@ -61,11 +65,11 @@ class RSAES_OAEP_Text(object):
             return None
         with self.lock:
             if not self.plaintext:
-                self.plaintext = self.decoder_ring.decrypt(self.ciphertext)
+                self.plaintext = self.decoder_ring.decrypt_binary(self.ciphertext)
         return self.plaintext
 
 
-def _importKey(filename, allow_prompt=True):
+def _importKey(filename, allow_prompt=True, logger=None):
     '''
     Import a RSA or DSA key from file contents
     If the key file requires a passphrase, ask for it only if allow_prompt is
@@ -77,32 +81,61 @@ def _importKey(filename, allow_prompt=True):
     # Try RSA first
     try:
         key = paramiko.RSAKey(filename=filename)
+        if logger:
+            logger.debug('Loaded unprotected RSA key from %s', filename)
         return key
     except paramiko.PasswordRequiredException:
         # Need passphrase for RSA key
         if not allow_prompt:
             raise
-        passphrase = getpass.getpass('Enter passphrase for RSA key [%s]: ' % filename)
-        key = paramiko.RSAKey(filename=filename, password=passphrase)
-        return key
+        retries=3
+        while retries:
+            try:
+                passphrase = getpass.getpass('Enter passphrase for RSA key [%s]: ' % filename)
+                key = paramiko.RSAKey(filename=filename, password=passphrase)
+                if logger:
+                    logger.debug('Loaded passphrase protected RSA key from %s', filename)
+                return key
+            except paramiko.SSHException as e:
+                print(repr(e))
+                retries -= 1
+        return Exception('3 failed passphrase attempts for %s' % filename)
     except paramiko.SSHException as e:
         rsa_exception = e
+    if logger:
+        logger.debug('Failed to load %s as RSA key\n\t%s', filename, repr(rsa_exception))
 
     # Format error - could be DSA key instead...
     try:
         key = paramiko.DSSKey(filename=filename)
+        if logger:
+            logger.debug('Loaded unprotected DSA key from %s', filename)
         return key
     except paramiko.PasswordRequiredException:
         # Need passphrase for DSA key
         if not allow_prompt:
             raise
-        passphrase = getpass.getpass('Enter passphrase for DSA key [%s]: ' % filename)
-        key = paramiko.DSSKey(filename=filename, password=passphrase)
-        return key
+        retries=3
+        while retries:
+            try:
+                passphrase = getpass.getpass('Enter passphrase for DSA key [%s]: ' % filename)
+                key = paramiko.DSSKey(filename=filename, password=passphrase)
+                if logger:
+                    logger.debug('Loaded passphrase protected DSA key from %s', filename)
+                return key
+            except paramiko.SSHException as e:
+                print(repr(e))
+                retries -= 1
+        return Exception('3 failed passphrase attempts for %s' % filename)
     except paramiko.SSHException as e:
         dsa_exception = e
 
-    raise ValueError('Unable to key from [%s]\nRSA failure: %r\nDSA failure: %r' % (filename, rsa_exception, dsa_exception))
+    if logger:
+        logger.debug('Failed to load %s as DSA key\n\t%s', filename, repr(dsa_exception))
+    # Give up on using this key
+    if logger:
+        logger.error('Unable to load key from [%s] | RSA failure: %r | DSA failure: %r' % (filename, rsa_exception, dsa_exception))
+    return RuntimeError('Unrecognized key: %s' % filename)
 
 
 class AuthManager(object):
@@ -112,6 +145,8 @@ class AuthManager(object):
         self.passwords = []
         self.default_password = None
         self.try_auth_none = try_auth_none
+        self.logger = logging.getLogger('radssh.auth')
+        self.import_lock = threading.Lock()
         if default_password:
             self.add_password(PlainText(default_password))
         self.deferred_keys = dict()
@@ -121,6 +156,7 @@ class AuthManager(object):
             self.default_user = os.environ.get('SSH_USER', os.environ['USER'])
 
         if include_agent:
+            self.logger.debug('Authentication can use SSH Agent (if available)')
             self.agent_connection = paramiko.Agent()
         else:
             self.agent_connection = None
@@ -129,6 +165,7 @@ class AuthManager(object):
             for keyfile in ('~/.ssh/id_rsa', '~/.ssh/id_dsa', '~/.ssh/identity'):
                 k = os.path.expanduser(keyfile)
                 if os.path.exists(k):
+                    self.logger.debug('Deferred load of identity SSH key file (%s)', k)
                     self.deferred_keys[k] = None
                     self.add_key(k)
 
@@ -155,26 +192,33 @@ class AuthManager(object):
                     data = fields[-1]
                     if fields[0] == 'password' or len(fields) == 1:
                         self.add_password(PlainText(data), filter)
+                        self.logger.info('PlainText password loaded from %s (line %d)', auth_file, line_no)
                     elif fields[0] == 'PKCSOAEP':
                         try:
                             encrypted_password = RSAES_OAEP_Text(data)
                             if encrypted_password.decoder_ring.unsupported:
                                 warnings.warn(RuntimeWarning(
-                                    'Ignoring unusable PKCSOAEP encrypted password from [%s:%d]' %
+                                    'Ignoring unusable PKCSOAEP encrypted password from %s (line %d)' %
                                     (auth_file, line_no)))
+                                self.logger.error('PKCS encryption not supported by PyCrypto - Ignoring encrypted password from %s (line %d)', auth_file, line_no)
                                 continue
                             self.add_password(encrypted_password, filter)
+                            self.logger.info('PKCS encrypted password loaded from %s (line %d)', auth_file, line_no)
                         except Exception as e:
-                            warnings.warn(RuntimeWarning('Failed to load PKCS encrypted password [%s:%d]\n%s' % (auth_file, line_no, repr(e))))
+                            warnings.warn(RuntimeWarning('Failed to load base64 PKCS encrypted password from %s (line %d)\n\t%s' % (auth_file, line_no, repr(e))))
+                            self.logger.error('Failed to load base64 PKCS encrypted password from %s (line %d)\n\t%s', auth_file, line_no, repr(e))
                     elif fields[0] == 'keyfile':
                         k = os.path.expanduser(data)
                         if os.path.exists(k):
                             self.deferred_keys[k] = None
                             self.add_key(k, filter)
+                            self.logger.info('Deferred load of SSH private key [%s] from %s (line %d)', k, auth_file, line_no)
                         else:
-                            raise ValueError('Unable to load key from [%s]\n%r' % k)
+                            self.logger.error('Nonexistent private key file [%s] referenced by %s (line %d)', k, auth_file, line_no)
+                            #raise ValueError('Unable to load key from [%s]' % k)
                     else:
                         warnings.warn(RuntimeWarning('Unsupported auth type [%s:%d] %s' % (auth_file, line_no, fields[0])))
+                        self.logger.error('Unsupported auth type "%s" referenced in %s (line %d)', fields[0], auth_file, line_no)
         except IOError:
             # Quietly fail if auth_file cannot be read
             pass
@@ -290,7 +334,13 @@ class AuthManager(object):
                             continue
             try:
                 if as_password:
-                    key = value
+                    try:
+                        key = str(value)
+                    except Exception as e:
+                        self.logger.debug('Unusable password value (%s): [%s]', str(e), repr(value))
+                        continue
+              
+                    self.logger.debug('Trying password (%s) for %s', '*' * len(key), T.getpeername()[0])
                     # Quirky Force10 servers seem to request further password attempt
                     # for a second stage - retry password as long as it is listed as an option
                     while True:
@@ -299,18 +349,25 @@ class AuthManager(object):
                 else:
                     # Actual keys may not be loaded yet. Only loaded when actively used, so
                     # we don't prompt for passphrases unless we absolutely have to.
+                    self.logger.debug('Trying private key (%s) for %s', repr(value), T.getpeername()[0])
                     if value not in self.deferred_keys:
                         # Not deferred - the value IS the key
                         key = value
                     elif not self.deferred_keys[value]:
-                        # Deferred, and not yet loaded - try _importKey()
-                        self.deferred_keys[value] = _importKey(value)
+                        # Deferred, and not yet loaded - try _importKey() to load it
+                        # limit to single thread for the _importKey() call
+                        with self.import_lock:
+                            if not self.deferred_keys[value]:
+                                self.deferred_keys[value] = _importKey(value, logger=self.logger)
                         key = self.deferred_keys[value]
                     else:
                         # Deferred and already loaded
                         key = self.deferred_keys[value]
                     try:
-                        T.auth_publickey(self.default_user, key)
+                        if isinstance(key, paramiko.pkey.PKey):
+                            T.auth_publickey(self.default_user, key)
+                        else:
+                            self.logger.error('Skipping SSH key %s (%s)', value, str(key))
                     except paramiko.BadAuthenticationType as e:
                         # Server configured to reject keys, don't bother trying any others
                         return None
@@ -323,6 +380,7 @@ class AuthManager(object):
 
 if __name__ == '__main__':
     import sys
+    logging.basicConfig(level=logging.ERROR)
     if not sys.argv[1:]:
         print('RadSSH AuthManager')
         print('Usage: python -m radssh.authmgr <authfile> [...]')
@@ -336,7 +394,7 @@ if __name__ == '__main__':
             for filter, keyfile in sample.keys:
                 if keyfile in sample.deferred_keys:
                     try:
-                        key = _importKey(keyfile, False)
+                        key = _importKey(keyfile, allow_prompt=False)
                         key_info = '%s (%s:%d bit)' % (keyfile, key.get_name(), key.get_bits())
                     except Exception as e:
                         key_info = '%s (Passphrase-Protected)' % (keyfile)

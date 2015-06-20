@@ -31,9 +31,13 @@ import socket
 import pprint
 import readline
 import atexit
+import logging
+import warnings
 import traceback
 
-import paramiko
+# Avoid having PowmInsecureWarning show on stderr every time
+with warnings.catch_warnings(record=True) as paramiko_load_warnings:
+	import paramiko
 
 from . import ssh
 from . import config
@@ -67,8 +71,9 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                 # Feed command line to any registered listeners from plugins
                 for feed in command_listeners:
                     feed(cmd)
-                with open(os.path.join(logdir, 'session.commands'), 'a') as f:
-                    f.write('%s\n' % cmd)
+                if logdir:
+                    with open(os.path.join(logdir, 'session.commands'), 'a') as f:
+                        f.write('%s\n' % cmd)
             args = cmd.split()
             if len(args) > 0:
                 if os.path.basename(args[0]) == 'sudo' and len(args) > 1:
@@ -89,7 +94,7 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                     # Comment
                     continue
                 if args[0].startswith('*'):
-                    ret = star.call(cluster, logdir, cmd, (defaults['verbose'] == 'on'))
+                    ret = star.call(cluster, logdir, cmd)
                     cluster.console.join()
                     if isinstance(ret, ssh.Cluster):
                         cluster.console.message('Switched cluster from %r to %r' % (cluster, ret))
@@ -266,6 +271,27 @@ def radssh_shell_main():
     if 'socket.timeout' in defaults:
         socket.setdefaulttimeout(float(defaults['socket.timeout']))
 
+    # Setup Logging
+    logformat = '%(asctime)s %(levelname)-8s [%(name)s:%(thread)08X] %(message)s'
+    logdir = os.path.expanduser(time.strftime(defaults.get('logdir','')))
+    if logdir:
+        if not os.path.exists(logdir):
+            os.mkdir(logdir)
+        logging.basicConfig(filename=os.path.join(logdir, 'radssh.log'),
+                            format=logformat)
+    else:
+        logging.basicConfig(format=logformat)
+        pass
+    try:
+        logging.getLogger().setLevel(getattr(logging, defaults['loglevel']))
+    except AttributeError:
+        raise RuntimeError('RadSSH setting "loglevel" should be set to one of [CRITICAL,ERROR,WARNING,INFO,DEBUG] instead of "%s"', defaults['loglevel'])
+    logger = logging.getLogger('radssh')
+
+    # With logging setup, output any deferred warnings
+    for w in paramiko_load_warnings:
+        logger.warning(warnings.formatwarning(w.message, w.category, w.filename, w.lineno))
+
     # Make an AuthManager to handle user authentication
     a = ssh.AuthManager(defaults['username'],
                         auth_file=os.path.expanduser(defaults['authfile']),
@@ -275,7 +301,6 @@ def radssh_shell_main():
 
     # Load Plugins to aid in host lookups and add *commands dynamically
     loaded_plugins = {}
-    plugin_failures = []
     exe_dir = os.path.dirname(os.path.realpath(sys.argv[0]))
     system_plugin_dir = os.path.join(exe_dir, 'plugins')
     disable_plugins = defaults['disable_plugins'].split(',')
@@ -293,31 +318,20 @@ def radssh_shell_main():
                 if plugin in loaded_plugins or plugin in disable_plugins:
                     continue
                 try:
+                    logger.info('Loading plugin module: %s', plugin)
                     this_plugin = radssh.plugins.load_plugin(os.path.join(plugin_dir, module))
                     if hasattr(this_plugin, 'init'):
+                        logger.debug('Calling init method for plugin: %s', plugin)
                         this_plugin.init(defaults=defaults, auth=a, plugins=loaded_plugins, star_commands=star.commands, shell=shell)
                     if hasattr(this_plugin, 'star_commands'):
+                        logger.debug('Registering *commands for plugin: %s %s', plugin, this_plugin.star_commands.keys())
                         star.commands.update(this_plugin.star_commands)
                     if hasattr(this_plugin, 'command_listener'):
                         command_listeners.append(this_plugin.command_listener)
                     loaded_plugins[plugin] = this_plugin
-                    if defaults['verbose'] == 'on':
-                        print('Loaded plugin %s' % plugin)
 
                 except Exception as e:
-                    plugin_failures.append((os.path.join(plugin_dir, module), sys.exc_info()))
-
-    if plugin_failures:
-        print('*** %d plugin(s) failed to load. ***' % len(plugin_failures))
-        if defaults['verbose'] != 'on':
-            print('    Use --verbose=on option to see details.')
-        else:
-            for path, exc in plugin_failures:
-                print('    ', path)
-                print('        ', exc[1])  # Exception Value
-                print('-' * 50)
-                traceback.print_tb(exc[2])  # Traceback
-                print('-' * 50)
+                    logger.error('Failed to load plugin (%s): %s', plugin, repr(e))
 
     # Use command line args as connect list, or give user option to supply list now
     if not args:
@@ -360,7 +374,7 @@ def radssh_shell_main():
                 pass
             if cluster:
                 expanded = True
-                print(arg, 'expanded by', helper)
+                logger.debug('%s expanded by %s', arg, helper)
                 for label, host, conn in cluster:
                     if conn:
                         hosts.append((label, conn))
@@ -370,16 +384,8 @@ def radssh_shell_main():
         if not expanded:
             hosts.append((arg, arg))
 
-    # Setup Logging
-    logdir = os.path.expanduser(time.strftime(defaults['logdir']))
-    if not os.path.exists(logdir):
-        os.mkdir(logdir)
-    if defaults.get('paramiko_log_level'):
-        paramiko.util.log_to_file(os.path.join(logdir, 'paramiko.log'),
-                                  int(defaults['paramiko_log_level']))
-
     # Almost done with all the preliminary setup steps...
-    if defaults['verbose'] == 'on':
+    if defaults['loglevel'] not in ('CRITICAL', 'ERROR'):
         print('*** Parallel Shell ***')
         print('Using AuthManager:', a)
         print('Logging to %s' % logdir)
@@ -396,10 +402,10 @@ def radssh_shell_main():
     # Finally, we are able to create the Cluster
     print('Connecting to %d hosts...' % len(hosts))
     cluster = ssh.Cluster(hosts, auth=a, console=console, defaults=defaults)
-    if defaults['verbose'] == 'on':
+    if defaults['loglevel'] not in ('CRITICAL', 'ERROR'):
         star.star_info(cluster, logdir, '', [])
     else:
-        # If cluster is not 100% connected, let user know even if verbose is not on
+        # If cluster is not 100% connected, let user know even if loglevel is not low enough
         ready, disabled, failed_auth, failed_connect, dropped = cluster.connection_summary()
         if any((failed_auth, failed_connect, dropped)):
             print('There were problems connecting to some nodes:')
