@@ -135,6 +135,8 @@ def _importKey(filename, allow_prompt=True, logger=None):
     # Give up on using this key
     if logger:
         logger.error('Unable to load key from [%s] | RSA failure: %r | DSA failure: %r' % (filename, rsa_exception, dsa_exception))
+    # Return, rather than raise the exception - Caller just needs something to
+    # fill the deferred_keys entry with that's not a paramiko.PKey and not None.
     return RuntimeError('Unrecognized key: %s' % filename)
 
 
@@ -349,8 +351,11 @@ class AuthManager(object):
                 else:
                     # Actual keys may not be loaded yet. Only loaded when actively used, so
                     # we don't prompt for passphrases unless we absolutely have to.
+                    # Python3: paramiko.AgentKey is not hashable, but also not eligible for
+                    # deferred loading, so don't try to lookup in dict as its not hashable, and
+                    # can't be used as a dict key.
                     self.logger.debug('Trying private key (%s) for %s', repr(value), T.getpeername()[0])
-                    if value not in self.deferred_keys:
+                    if isinstance(value, paramiko.AgentKey) or value not in self.deferred_keys:
                         # Not deferred - the value IS the key
                         key = value
                     elif not self.deferred_keys[value]:
@@ -364,7 +369,7 @@ class AuthManager(object):
                         # Deferred and already loaded
                         key = self.deferred_keys[value]
                     try:
-                        if isinstance(key, paramiko.pkey.PKey):
+                        if isinstance(key, paramiko.PKey):
                             T.auth_publickey(self.default_user, key)
                         else:
                             self.logger.error('Skipping SSH key %s (%s)', value, str(key))
