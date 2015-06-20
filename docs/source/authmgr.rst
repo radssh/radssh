@@ -45,3 +45,9 @@ authfile::
         # Try a DB server key for all hosts starting with 'db'
         keyfile|db*|/home/mysqldba/admin/id_rsa
 
+	# You can include passwords encrypted with your RSA public key
+	# with the PKCS-OAEP mechanism of the PyCrypto module. Use
+	# the radssh.pkcs module to encrypt passwords, then copy/paste
+	# the encrypted results into the auth file like this:
+	PKCSOAEP|*|nPIC8J08T7x4G1PsZPKH9bjeQd/8A1vLiOCCrH1chSvpz0hEfJqeqPMyLxhqCames5ID9eqvFmbyZBBfPPxGjoAJMHgKc+xfF68+nLjE87pc6WlbeTu9jQKeS5Xeu+oeuwTx81xFTDSyrUyW6/eo88jPxS2w0LjYqfn5RNsBEDygpD7Hah0BVbqSUhDwx4m8Qw4MI4kMzqWFS9Ev8Vo5yomQ3fSSJsun2OgK+d0DLWl4eMmVU+fmFbRSZdoSRL1/1Kadl2jBuhOu9j9nhGS2NEhxE5OZd26EX7jD8KrRq7JSsCExUbrnKgykri3RL0BS3mhXsnv1crINBh2+mamh0Q==
+	# See: http://radssh.readthedocs.org/en/latest/pkcs.html#pkcs for more details

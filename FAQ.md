@@ -10,7 +10,7 @@ RadSSH Project
 
 #. How do I install RadSSH?
 
-   The preferred installation method is using the Python Installation Program, **pip**, and by the time you are reading this, RadSSH should be registered and uploaded to the Python Package Index, PyPI.
+   The preferred installation method is using the Python Installation Program, **pip**. If you have internet connectivity, **pip** should find everything it need on pypi.python.org.
 
 #. What version(s) of Python does RadSSH work with?
 
@@ -70,7 +70,7 @@ RadSSH Shell
 
    Most plugin load failures arise from not having a needed Python module for the plugin. The core plugins for RadSSH should only need modules from the Python Standard Library, but supplemental and third-party plugins are free to rely on other modules, which may or may not be available.
 
-   To see details on which plugins are failing to load, and the specific load errors, include **--verbose=on** option. You can install the needed modules that the plugin depends on, or if you have no use for the functionality of the plugin, you can add the plugin name to the **disable_plugins** list.
+   To see details on which plugins are failing to load, and the specific load errors, run "python -m radssh.plugins list". You can install the needed modules that the plugin depends on, or if you have no use for the functionality of the plugin, you can add the plugin name to the **disable_plugins** list.
 
 User Authentication
 -------------------

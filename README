@@ -19,11 +19,11 @@ That should be it as far as installation and setup.
 Running the shell:
 	python -m radssh.shell host1 host2 host3 host4 ...
 
-On first run, if you don't already have a ~/.genesisshrc file (yeah, this should be renamed to .radssh.rc or something), it will create one with commented out settings. You can later setup your own custom settings based on that template. Recommend setting the username and authfile , and manually create the authfile to jam in the passwords and/or key files that you want to use for longer term setup.
+On first run, if you don't already have a ~/.radssh_config file, it will operate with internal default settings. You can setup your own custom settings based on that template by running "python -m radssh.config > ~/.radssh_config" and then edit the saved file, uncommenting and setting your own personal defaults.
 
-Even if you have no .rc file and no authfile configured, it will default to the current username, and if you have no keys or agent, it will prompt for a password for the user. Even if the initial username is bad, you can go ahead and make the network connections and allow the authentication to fail. You can try alternate usernames (and passwords, but not keys) by entering "*auth root" at the shell $ prompt. Plain "*auth" will use the default username, explicitly adding a name (root) will attempt authentication as that user. The *auth will skip any connections that are already connected and authenticated, so this can be used in an environment where you for some reason have many different passwords to try.
+Even if you have no custom configuration file and no authfile configured, it will default to the current username, and if you have no keys or agent, it will prompt for a password for the user. Even if the initial username is bad, you can go ahead and make the network connections and allow the authentication to fail. You can try alternate usernames (and passwords, but not keys) by entering "*auth root" at the shell $ prompt. Plain "*auth" will use the default username, explicitly adding a name (root) will attempt authentication as that user. The *auth will skip any connections that are already connected and authenticated, so this can be used in an environment where you for some reason have many different passwords to try.
 
-Once connected and authenticated, commands typed at the $ prompt will be issued to all "live" hosts (connected, authenticated, and enabled).
+Once connected and authenticated, commands typed at the "RadSSH $" prompt will be issued to all "live" hosts (connected, authenticated, and enabled).
 
 Basic caveats:
 •	Typing "exit" at the prompt will run "exit" on all the remote nodes, and report on the results. To exit the shell, hit Ctrl-D

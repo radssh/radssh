@@ -39,8 +39,8 @@ General Settings
 ----------------
  - username (default: **$SSH_USER** or **$USER**)
     Login name for establishing SSH sessions
- - verbose (default: off) 
-    Set to **on** to make RadSSH display more details about what it is doing while it is doing it.
+ - loglevel (default: ERROR) 
+    One of CRITICAL, ERROR, WARNING, INFO, DEBUG. The old **verbose** setting is now deprecated.
  - output_mode (default: stream)
     **stream** will output lines of text to the console as they come in. **ordered** will preserve host ordering, which may give the appearance of disrupting parallelism on commands with lengthy output. **off** turns off console output while commands are running, but does not affect file logging of output. Can be changed within the shell via the **\*output** command.
  - max_threads (default: 120)
@@ -50,7 +50,7 @@ General Settings
  - shell.prompt (default: "RadSSH $")
     The RadSSH shell prompt issued before reading each command line.
  - logdir (default: session_%Y%m%d_%H%M%S)
-    Location of the session logging directory. Defaults to current directory, and supports expansion of datetime elements. Path prefix can be added, including ~ for user home directory.
+    Location of the session logging directory. Defaults to current directory, and supports expansion of datetime elements. Path prefix can be added, including ~ for user home directory. Can be set to blank, to cause logging to go to the console as stderr stream.
  - log_out (default: out.log)
     Consolidated (all host) stdout filename. Created in the logdir directory.
  - log_err (default: err.log)
@@ -85,8 +85,8 @@ General Settings
     Prevent use of the comma separated list of programs. Anything that needs interactive keyboard input will not likely behave as anticipated under RadSSH, and should not be run.
  - commands.restricted (default: rm,reboot,shutdown,halt,poweroff,telinit)
     Have RadSSH intercept possibly dangerous commands (extremely dangerous if mistakenly run on hundreds of servers simultaneously) and require explicit confirmation that the user intends to do precisely what was typed in.
- - paramiko_log_level (default: 40)
-    Set to lower numbers to increase logging output of paramiko low-level SSH operations.
+ - paramiko_log_level
+    Deprecated setting. Now able to be set via **loglevel** setting.
  - try_auth_none (default: off)
     Perform a initial authentication probing request to determine whether the remote host accepts keys or passwords, or both. Setting to **on** may improve connection speeds by bypassing unsupported authentication attempts, but use caution, as some remote SSH implementations, like Cisco switches will abruptly drop connection if auth-none is attempted.  OpenSSH on RHEL/CentOS 5 will fail to send a banner unless auth-none is attempted.
  - force_tty=Cisco,force10networks
