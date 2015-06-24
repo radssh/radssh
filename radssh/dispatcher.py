@@ -16,6 +16,8 @@ Dispatcher Module
 import threading
 from itertools import count
 import time
+import logging
+import traceback
 try:
     import queue
 except ImportError:
@@ -67,6 +69,7 @@ def generic_dispatch(inQ, outQ):
             # Set result to the exception instead of the return value, since we don't have one
             if outQ:
                 outQ.put((job_id, JobSummary(False, job_id, e, start_time)))
+            logging.debug(traceback.format_exc())
         finally:
             inQ.task_done()
 
