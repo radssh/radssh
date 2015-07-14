@@ -102,7 +102,7 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                     continue
                 r = cluster.run_command(cmd)
                 if logdir:
-                    cluster.log_result(logdir)
+                    cluster.log_result(logdir, encoding=defaults['character_encoding'])
                 # Quick summary report, if jobs failed
                 failures = {}
                 completions = []

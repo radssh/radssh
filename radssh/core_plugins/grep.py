@@ -17,30 +17,30 @@ from __future__ import print_function  # Requires Python 2.6 or higher
 def star_grep(cluster, logdir, cmdline, *args):
     '''Scan (not real grep) for string matches in stdout'''
     # Get from cmdline, not args as it might have signifiance space
-    pattern = cmdline[6:]
+    pattern = cmdline[6:].encode(cluster.defaults['character_encoding'])
     for host in sorted(cluster.connections.keys()):
         job = cluster.last_result.get(host)
         if job:
             res = job.result
-            for line_number, line in enumerate(res.stdout.split('\n'), 1):
+            for line_number, line in enumerate(res.stdout.split(b'\n'), 1):
                 if pattern in line:
-                    print('%s [%d]: %s' % (host, line_number, line.rstrip()))
+                    print('%s [%d]: %s' % (host, line_number, line.rstrip().decode(cluster.defaults['character_encoding'], 'replace')))
             # Do a second pass through stderr, so matching lines can be tagged
-            for line_number, line in enumerate(res.stderr.split('\n'), 1):
+            for line_number, line in enumerate(res.stderr.split(b'\n'), 1):
                 if pattern in line:
-                    print('%s [%d/stderr]: %s' % (host, line_number, line.rstrip()))
+                    print('%s [%d/stderr]: %s' % (host, line_number, line.rstrip().decode(cluster.defaults['character_encoding'], 'replace')))
 
 
 def star_match(cluster, logdir, cmdline, *args):
     '''Combine *grep with *enable for hits (*match) or misses (*nomatch)'''
 
     if cmdline.startswith('*nomatch'):
-        pattern = cmdline[9:]
+        pattern = cmdline[9:].encode(cluster.defaults['character_encoding'])
 
         def include_host(pattern, buffer):
             return pattern not in buffer
     else:
-        pattern = cmdline[7:]
+        pattern = cmdline[7:].encode(cluster.defaults['character_encoding'])
 
         def include_host(pattern, buffer):
             return pattern in buffer

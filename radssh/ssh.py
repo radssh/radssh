@@ -44,7 +44,7 @@ from . import config
 # running background threads to terminate prior to command completion
 user_abort = threading.Event()
 
-FILTER_TTY_ATTRS_RE = re.compile("\x1b\\[(\d)+(;(\d+))*m")
+FILTER_TTY_ATTRS_RE = re.compile(b"\x1b\\[(\d)+(;(\d+))*m")
 
 
 def filter_tty_attrs(line):
@@ -160,12 +160,12 @@ def connection_worker(host, conn, auth, key_verifier=None):
     return t
 
 
-def exec_command(host, t, cmd, quota, streamQ):
+def exec_command(host, t, cmd, quota, streamQ, encoding='UTF-8'):
     '''Run a command across a transport via exec_cmd. Capture stdout, stderr, and return code, streaming to an optional output queue'''
     return_code = None
     if isinstance(t, paramiko.Transport) and t.is_authenticated():
-        stdout = StreamBuffer(streamQ, (str(host), False), blocksize=2048)
-        stderr = StreamBuffer(streamQ, (str(host), True), blocksize=2048)
+        stdout = StreamBuffer(streamQ, (str(host), False), blocksize=2048, encoding=encoding)
+        stderr = StreamBuffer(streamQ, (str(host), True), blocksize=2048, encoding=encoding)
         # If transport has a persistent session (identified by being named same as the transport.remote_version)
         # then use the persistent session via send/recv to the shell quasi-interactively, rather than
         # creating a single-use session with exec_command, which gives true process termination (exit_status_ready)
@@ -268,7 +268,7 @@ def exec_command(host, t, cmd, quota, streamQ):
         return CommandResult(command=cmd, return_code=return_code, status=process_completion, stdout=stdout.buffer, stderr=stderr.buffer)
     else:
         process_completion = '*** Skipped ***'
-        return CommandResult(command=cmd, return_code=return_code, status=process_completion, stdout='', stderr='')
+        return CommandResult(command=cmd, return_code=return_code, status=process_completion, stdout=b'', stderr=b'')
 
 
 def sftp_thread(host, t, srcfile, dstfile=None, attrs=None):
@@ -585,9 +585,9 @@ class Cluster(object):
                     continue
                 # Now we have a legit command line to execute
                 if self.output_mode == 'stream':
-                    self.pending[self.dispatcher.submit(exec_command, k, t, cmd, self.quota, self.console.q)] = k
+                    self.pending[self.dispatcher.submit(exec_command, k, t, cmd, self.quota, self.console.q, self.defaults['character_encoding'])] = k
                 else:
-                    self.pending[self.dispatcher.submit(exec_command, k, t, cmd, self.quota, None)] = k
+                    self.pending[self.dispatcher.submit(exec_command, k, t, cmd, self.quota, None, self.defaults['character_encoding'])] = k
             # Wait for background jobs to complete
             while self.pending:
                 try:
@@ -634,47 +634,47 @@ class Cluster(object):
         self.last_result = result
         return result
 
-    def log_result(self, logdir=None, command_header=True):
+    def log_result(self, logdir=None, command_header=True, encoding='UTF-8'):
         '''Save last_result content to a log directory - 1 file per host'''
         if logdir:
             for k, job in self.last_result.items():
                 v = job.result
                 if isinstance(v, CommandResult):
                     if self.log_out:
-                        lines = v.stdout.strip().split('\n')
+                        lines = v.stdout.strip().split(b'\n')
                         if lines:
-                            with open(os.path.join(logdir, self.log_out), 'a') as f:
-                                f.write('[%s] === "%s" %s [%s] ===\n' %
-                                        (str(k), v.command, v.status, v.return_code))
+                            with open(os.path.join(logdir, self.log_out), 'ab') as f:
+                                f.write(('[%s] === "%s" %s [%s] ===\n' %
+                                        (str(k), v.command, v.status, v.return_code)).encode(encoding))
                                 for line in lines:
-                                    f.write("[{0}]".format(str(k)) + filter_tty_attrs(line) + "\n")
-                    with open(os.path.join(logdir, str(k) + '.log'), 'a') as f:
+                                    f.write(("[{0}]".format(str(k)) + filter_tty_attrs(line).decode(encoding, errors='replace') + "\n").encode(encoding))
+                    with open(os.path.join(logdir, str(k) + '.log'), 'ab') as f:
                         if command_header:
-                            f.write('=== "%s" %s [%s] ===\n' %
-                                    (v.command, v.status, v.return_code))
+                            f.write(('=== "%s" %s [%s] ===\n' %
+                                    (v.command, v.status, v.return_code)).encode(encoding))
                         f.write(v.stdout)
-                        f.write('\n')
+                        f.write(b'\n')
                     if v.stderr:
                         if self.log_err:
-                            lines = v.stderr.strip().split('\n')
+                            lines = v.stderr.strip().split(b'\n')
                             if lines:
-                                with open(os.path.join(logdir, self.log_err), 'a') as f:
-                                    f.write('[%s] === "%s" %s [%s] ===\n' %
-                                            (str(k), v.command, v.status, v.return_code))
+                                with open(os.path.join(logdir, self.log_err), 'ab') as f:
+                                    f.write(('[%s] === "%s" %s [%s] ===\n' %
+                                            (str(k), v.command, v.status, v.return_code)).encode(encoding))
                                     for line in lines:
-                                        f.write("[{0}]".format(str(k)) + filter_tty_attrs(line) + "\n")
-                        with open(os.path.join(logdir, str(k) + '.stderr'), 'a') as f:
+                                        f.write(("[{0}]".format(str(k)) + filter_tty_attrs(line).decode(encoding, errors='replace') + "\n").encode(encoding))
+                        with open(os.path.join(logdir, str(k) + '.stderr'), 'ab') as f:
                             f.write(v.stderr)
-                            f.write('\n')
+                            f.write(b'\n')
                 else:
                     if self.log_err:
-                        lines = repr(v).split('\n')
+                        lines = str(v).split('\n')
                         if lines:
-                            with open(os.path.join(logdir, self.log_err), 'a') as f:
+                            with open(os.path.join(logdir, self.log_err), 'ab') as f:
                                 for line in lines:
-                                    f.write("[{0}]".format(str(k)) + filter_tty_attrs(line) + "\n")
-                    with open(os.path.join(logdir, str(k) + '.log'), 'a') as f:
-                        f.write('%s\n' % repr(v))
+                                    f.write(("[{0}]".format(str(k)) + line + "\n").encode(encoding))
+                    with open(os.path.join(logdir, str(k) + '.log'), 'ab') as f:
+                        f.write(('%s\n' % str(v)).encode(encoding))
 
     def sftp(self, src, dst=None, attrs=None):
         '''SFTP a file (put) to all nodes'''

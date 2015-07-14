@@ -25,6 +25,7 @@ can manage.
 from __future__ import print_function  # Requires Python 2.6 or higher
 
 import os
+import sys
 import time
 import platform
 import threading
@@ -75,6 +76,7 @@ if __name__ == '__main__':
     if platform.system() == 'Linux':
         print('  %s (%s)' % (platform.linux_distribution()[0],
                              '/'.join(platform.linux_distribution()[1:])))
+    print('Encoding for stdout:', sys.stdout.encoding)
 
     # Test runtime limits of open files and threads
     print('\nChecking runtime limits...')

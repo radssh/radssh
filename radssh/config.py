@@ -57,6 +57,8 @@ historyfile=~/.radssh_history
 
 # Available modes: {stream, ordered, off}
 output_mode=stream
+# Can override character encoding (will use sys.stdout.encoding if not specified)
+# character_encoding=UTF-8
 # Avoiding runaway commands with either too much output, or
 # waiting indefinately at a user prompt...
 quota.time=0
@@ -198,6 +200,8 @@ def load_settings(cmdline_args=[]):
     if 'username' not in settings:
         settings['username'] = os.environ.get(
             'SSH_USER', os.environ.get('USER', os.environ.get('USERNAME', 'default')))
+    if 'character_encoding' not in settings:
+        settings['character_encoding'] = sys.stdout.encoding
     return settings
 
 

@@ -126,9 +126,9 @@ def star_result(cluster, logdir, cmdline, *args):
             running_time = job.end_time - job.start_time
             if isinstance(res, CommandResult):
                 if res.stdout:
-                    cluster.console.q.put(((x, False), res.stdout))
+                    cluster.console.q.put(((x, False), res.stdout.decode(cluster.defaults['character_encoding'], errors='replace')))
                 if res.stderr:
-                    cluster.console.q.put(((x, True), res.stderr))
+                    cluster.console.q.put(((x, True), res.stderr.decode(cluster.defaults['character_encoding'], errors='replace')))
             else:
                 cluster.console.q.put(((x, True), repr(res)))
             cluster.console.join()
@@ -151,7 +151,7 @@ def star_get(cluster, logdir, cmdline, *args):
             if job.completed and result.return_code == 0:
                 if not os.path.isdir(os.path.join(dest, str(host))):
                     os.makedirs(os.path.join(dest, str(host)))
-                with open(os.path.join(dest, str(host), namepart), 'w') as f:
+                with open(os.path.join(dest, str(host), namepart), 'wb') as f:
                     f.write(result.stdout)
     cluster.output_mode = save_mode
     cluster.last_result = save_res

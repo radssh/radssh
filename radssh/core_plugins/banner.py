@@ -31,20 +31,20 @@ def banner(cluster, logdir, cmd, *args):
         if isinstance(conn, paramiko.Transport):
             banner_text = conn.get_banner()
             if banner_text is not None:
-                cluster.console.q.put(((host, False), banner_text))
+                cluster.console.q.put(((host, False), banner_text.decode(cluster.defaults['character_encoding'], 'replace')))
                 result = CommandResult(command='*banner', return_code=0,
                                        status='*** Complete ***',
-                                       stdout=conn.get_banner(), stderr='')
+                                       stdout=banner_text, stderr=b'')
             else:
                 cluster.console.q.put(((host, True), 'No SSH Banner Received'))
                 result = CommandResult(command='*banner', return_code=0,
                                        status='*** Complete ***',
-                                       stdout='', stderr='No SSH Banner Received')
+                                       stdout=b'', stderr=b'No SSH Banner Received')
         else:
             cluster.console.q.put(((host, True), str(conn)))
             result = CommandResult(command='*banner', return_code=0,
                                    status='*** Complete ***',
-                                   stdout='', stderr=str(conn))
+                                   stdout=b'', stderr=str(conn).encode(cluster.defaults['character_encoding'], 'xmlcharrefreplace'))
         cluster.last_result[host] = JobSummary(True, 0, result)
     if logdir:
         cluster.log_result(logdir)

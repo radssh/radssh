@@ -22,7 +22,7 @@ import os
 import fcntl
 
 
-def posix_shell(chan):
+def posix_shell(chan, encoding='UTF-8'):
     try:
         chan.settimeout(0.0)
 
@@ -34,13 +34,13 @@ def posix_shell(chan):
                     if len(x) == 0:
                         sys.stdout.write('\r\n*** EOF ***\r\n')
                         break
-                    sys.stdout.write(x)
+                    sys.stdout.write(x.decode(encoding))
                     sys.stdout.flush()
                 except socket.timeout:
                     pass
             if sys.stdin in r:
                 x = sys.stdin.read()
-                chan.send(x)
+                chan.send(x.encode(encoding))
     except Exception as e:
         print('Exception in TTY session\n%r\n' % e)
 
@@ -95,12 +95,13 @@ def radssh_tty(cluster, logdir, cmd, *args):
             t = cluster.connections[cluster.locate(x)]
             if not t.is_authenticated():
                 print('Skipping TTY request for %s (not authenticated)\r' % str(x))
+                continue
             session = t.open_session()
             session.set_combine_stderr(True)
             session.get_pty(width=cols, height=lines)
             print('Starting TTY session for %s\r' % str(x))
             session.invoke_shell()
-            posix_shell(session)
+            posix_shell(session, cluster.defaults['character_encoding'])
             print('TTY session for %s completed\r' % str(x))
             session.close()
         except Exception as e:
