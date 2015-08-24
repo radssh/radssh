@@ -620,7 +620,9 @@ class Cluster(object):
                         last_interrupt = time.time()
                         self.console.status('Completed on %d/%d hosts' % (len(result), total))
                         self.console.q.put((('CONSOLE', True), '*** <Ctrl-C> ***'))
-                        in_flight = [str(k) for k in self.pending.values() if k not in result]
+                        in_flight = sorted([str(k) for k in self.pending.values() if k not in result])
+                        for host in in_flight:
+                            self.console.replay_recent(host)
 
                         self.console.q.put((('CONSOLE', True), 'In-Flight commands running on %s' % str(in_flight)))
                         self.console.q.put((('CONSOLE', True), 'To kill: Press <Ctrl-C> again within 2 seconds'))
@@ -647,7 +649,7 @@ class Cluster(object):
                                 f.write(('[%s] === "%s" %s [%s] ===\n' %
                                         (str(k), v.command, v.status, v.return_code)).encode(encoding))
                                 for line in lines:
-                                    f.write(("[{0}]".format(str(k)) + filter_tty_attrs(line).decode(encoding, errors='replace') + "\n").encode(encoding))
+                                    f.write(("[{0}]".format(str(k)) + filter_tty_attrs(line).decode(encoding, 'replace') + "\n").encode(encoding))
                     with open(os.path.join(logdir, str(k) + '.log'), 'ab') as f:
                         if command_header:
                             f.write(('=== "%s" %s [%s] ===\n' %
@@ -662,7 +664,7 @@ class Cluster(object):
                                     f.write(('[%s] === "%s" %s [%s] ===\n' %
                                             (str(k), v.command, v.status, v.return_code)).encode(encoding))
                                     for line in lines:
-                                        f.write(("[{0}]".format(str(k)) + filter_tty_attrs(line).decode(encoding, errors='replace') + "\n").encode(encoding))
+                                        f.write(("[{0}]".format(str(k)) + filter_tty_attrs(line).decode(encoding, 'replace') + "\n").encode(encoding))
                         with open(os.path.join(logdir, str(k) + '.stderr'), 'ab') as f:
                             f.write(v.stderr)
                             f.write(b'\n')

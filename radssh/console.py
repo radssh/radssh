@@ -21,6 +21,7 @@ stderr (highlight) or not.
 '''
 import sys
 import threading
+from collections import deque, defaultdict
 try:
     import queue
 except ImportError:
@@ -52,7 +53,7 @@ class RadSSHConsole(object):
     When run in a terminal window, uses ANSI escape sequences to
     colorize output, and use the window/tab title for status messages.
     '''
-    def __init__(self, q=None, formatter=colorizer):
+    def __init__(self, q=None, formatter=colorizer, retain_recent=0):
         if q:
             self.q = q
         else:
@@ -63,6 +64,12 @@ class RadSSHConsole(object):
         self.background_thread.setDaemon(True)
         self.background_thread.setName('Console Output')
         self.background_thread.start()
+
+        def limit_deque():
+            return deque([], retain_recent)
+
+        self.retain_recent = retain_recent
+        self.recent_history = defaultdict(limit_deque)
 
     def quiet(self, enable=True):
         '''Set (or clear) console quietmode. Returns prior setting.'''
@@ -92,6 +99,14 @@ class RadSSHConsole(object):
             sys.stdout.write(s)
             sys.stdout.flush()
 
+    def replay_recent(self, label):
+        '''Output the recent lines sent tagged from "label" - Used for Ctrl-C handler'''
+        if not self.retain_recent:
+            return
+        self.join()
+        for line in self.recent_history.get(str(label)):
+            sys.stdout.write('STALLED: '+line)
+
     def console_thread(self):
         '''Background-able thread to pull from outputQ and format and print to screen'''
         while True:
@@ -101,6 +116,8 @@ class RadSSHConsole(object):
                     # Tag is tuple of (label, stderr_flag)
                     for line in self.formatter(tag, text):
                         sys.stdout.write(line)
+                        if self.retain_recent:
+                            self.recent_history[str(tag[0])].append(line)
                     sys.stdout.flush()
             except Exception as e:
                 sys.stdout.write('Console Thread Exception: %s\n' % str(e))

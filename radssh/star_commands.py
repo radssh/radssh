@@ -126,9 +126,9 @@ def star_result(cluster, logdir, cmdline, *args):
             running_time = job.end_time - job.start_time
             if isinstance(res, CommandResult):
                 if res.stdout:
-                    cluster.console.q.put(((x, False), res.stdout.decode(cluster.defaults['character_encoding'], errors='replace')))
+                    cluster.console.q.put(((x, False), res.stdout.decode(cluster.defaults['character_encoding'], 'replace')))
                 if res.stderr:
-                    cluster.console.q.put(((x, True), res.stderr.decode(cluster.defaults['character_encoding'], errors='replace')))
+                    cluster.console.q.put(((x, True), res.stderr.decode(cluster.defaults['character_encoding'], 'replace')))
             else:
                 cluster.console.q.put(((x, True), repr(res)))
             cluster.console.join()

@@ -42,6 +42,11 @@ loglevel=ERROR
 
 shell.prompt=RadSSH $
 shell.console=color
+# To see last few lines of output of in-flight jobs when pressing Ctrl-C
+# set this parameter to the number of lines to retain. Can be very memory
+# intensive.
+stalled_job_buffer=0
+
 max_threads=120
 # Automatically save log files into date/time-stamped local directory
 logdir=session_%Y%m%d_%H%M%S

@@ -400,10 +400,11 @@ def radssh_shell_main():
         star.star_help()
 
     # Create a RadSSHConsole instance for screen output
+    job_buffer = int(defaults['stalled_job_buffer'])
     if defaults['shell.console'] != 'color' or not sys.stdout.isatty():
-        console = RadSSHConsole(formatter=monochrome)
+        console = RadSSHConsole(formatter=monochrome, retain_recent=job_buffer)
     else:
-        console = RadSSHConsole()
+        console = RadSSHConsole(retain_recent=job_buffer)
 
     # Finally, we are able to create the Cluster
     print('Connecting to %d hosts...' % len(hosts))
