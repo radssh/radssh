@@ -39,6 +39,7 @@ from .dispatcher import Dispatcher, UnfinishedJobs
 from .console import RadSSHConsole
 from .hostkey import HostKeyVerifier
 from . import config
+from .keepalive import KeepAlive, ServerNotResponding
 
 # If main thread gets KeyboardInterrupt, use this to signal
 # running background threads to terminate prior to command completion
@@ -166,6 +167,7 @@ def exec_command(host, t, cmd, quota, streamQ, encoding='UTF-8'):
     if isinstance(t, paramiko.Transport) and t.is_authenticated():
         stdout = StreamBuffer(streamQ, (str(host), False), blocksize=2048, encoding=encoding)
         stderr = StreamBuffer(streamQ, (str(host), True), blocksize=2048, encoding=encoding)
+        keepalive = KeepAlive(t)
         # If transport has a persistent session (identified by being named same as the transport.remote_version)
         # then use the persistent session via send/recv to the shell quasi-interactively, rather than
         # creating a single-use session with exec_command, which gives true process termination (exit_status_ready)
@@ -225,6 +227,13 @@ def exec_command(host, t, cmd, quota, streamQ, encoding='UTF-8'):
                 # Push out a (nothing) in case the queue needs to do a time-based dump
                 stdout.push('')
                 quiet_time += quiet_increment
+                try:
+                    if quiet_time > 5.0:
+                        keepalive.ping()
+                except ServerNotResponding:
+                    t.close()
+                    process_completion = '*** Server Not Responding ***'
+                    break
             # Read from stderr socket, altered timeout
             try:
                 s.settimeout(0.1)
