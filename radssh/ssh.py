@@ -371,6 +371,7 @@ class Cluster(object):
                         if transport.is_authenticated():
                             transport.set_keepalive(int(self.defaults.get('keepalive', 0)))
                             self.console.progress('.')
+                            logging.getLogger('radssh.connection').info('Authenticated to %s' % host)
                             # IOS switch may require invoke_shell instead of exec_command
                             for id_string in self.defaults.get('force_tty', '').split(','):
                                 if id_string and id_string in transport.remote_version:
@@ -391,8 +392,10 @@ class Cluster(object):
                                     tty.send('\n')
                         else:
                             self.console.progress('O')
+                            logging.getLogger('radssh.connection').warning('Failed to authenticate to %s: %s' % (host, str(transport)))
                     except Exception as e:
                         self.console.progress('X')
+                        logging.getLogger('radssh.connection').warning('Failed to connect to %s: %s' % (host, str(transport)))
                 break
             except UnfinishedJobs as e:
                 self.console.message(e.message, 'STALLED')
@@ -401,6 +404,7 @@ class Cluster(object):
                 for label in self.pending.values():
                     self.console.message(label, 'FAILED CONNECTION')
                     self.connections[label] = Exception('Failed to connect/Ctrl-C')
+                    logging.getLogger('radssh.connection').warning('Aborted connect to %s: Ctrl-C' % host)
                 self.pending.clear()
                 # Blocked threads can cause issues with internal recordkeeping of Dispatcher
                 # object, and havoc if the thread ever unblocks and sends a completion message
