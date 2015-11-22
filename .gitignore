@@ -1,1 +1,5 @@
 docs/build
+build/
+dist/
+radssh.egg-info/
+radssh/plugins

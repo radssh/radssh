@@ -609,11 +609,11 @@ class Cluster(object):
                                 host = ordered_list.pop(0)
                                 job = result[host]
                                 if job.result.stdout:
-                                    self.console.q.put(((host, False), job.result.stdout[:-1]))
+                                    self.console.q.put(((host, False), job.result.stdout))
                                 else:
                                     self.console.q.put(((host, False), '[No Output]'))
                                 if job.result.stderr:
-                                    self.console.q.put(((host, True), job.result.stderr[:-1]))
+                                    self.console.q.put(((host, True), job.result.stderr))
                         else:
                             ordered_list.remove(host)
                         self.console.status('Completed on %d/%d hosts' % (len(result), total))

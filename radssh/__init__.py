@@ -15,7 +15,7 @@ RadSSH - SSH parallel pseudo-shell and toolkit
 
 from __future__ import print_function  # Requires Python 2.6 or higher
 
-version_info = (1, 0, 5)
+version_info = (1, 0, 6)
 version = '.'.join([str(x) for x in version_info])
 
 __author__ = 'Paul Kapp'
