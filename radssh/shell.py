@@ -70,7 +70,10 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                     continue
                 # Feed command line to any registered listeners from plugins
                 for feed in command_listeners:
-                    feed(cmd)
+                    feed_result = feed(cmd)
+                    if feed_result:
+                        cluster.console.message('Command modified from "%s" to "%s"' % (cmd, feed_result))
+                        cmd = str(feed_result)
                 if logdir:
                     with open(os.path.join(logdir, 'session.commands'), 'a') as f:
                         f.write('%s\n' % cmd)
@@ -422,7 +425,7 @@ def radssh_shell_main():
                 print('    %d nodes failed authentication' % failed_auth)
             if dropped:
                 print('    %d dropped connections' % dropped)
-            print ('    Use "*info" for connection details.')
+            print('    Use "*info" for connection details.')
 
     # Command line history support
     if defaults.get('historyfile'):
