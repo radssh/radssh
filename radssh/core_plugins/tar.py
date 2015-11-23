@@ -21,6 +21,7 @@ tar_options = {
 
 tar_sequence = itertools.count(1)
 
+
 def tar_command(cluster, logdir, cmd, *args):
     '''Gather remote files in bulk as tar/tbz/tgz archive'''
     opts = tar_options.get(cmd.split()[0], '-cv')

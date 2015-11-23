@@ -217,7 +217,7 @@ class AuthManager(object):
                             self.logger.info('Deferred load of SSH private key [%s] from %s (line %d)', k, auth_file, line_no)
                         else:
                             self.logger.error('Nonexistent private key file [%s] referenced by %s (line %d)', k, auth_file, line_no)
-                            #raise ValueError('Unable to load key from [%s]' % k)
+                            # raise ValueError('Unable to load key from [%s]' % k)
                     else:
                         warnings.warn(RuntimeWarning('Unsupported auth type [%s:%d] %s' % (auth_file, line_no, fields[0])))
                         self.logger.error('Unsupported auth type "%s" referenced in %s (line %d)', fields[0], auth_file, line_no)

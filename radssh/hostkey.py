@@ -80,7 +80,7 @@ class HostKeyVerifier(object):
         if self.mode == verify_mode.ignore:
             return True
         # Special formatting for non-standard ports...
-        if not ':' in hostname:
+        if ':' not in hostname:
             lookup_name = hostname
         elif hostname.endswith(':22'):
             lookup_name = hostname[:-3]

@@ -21,12 +21,14 @@ import struct
 
 import paramiko
 
+
 class ServerNotResponding(Exception):
     '''
     Raised when (threshold) keepalive messages in a row fail to get
     any response, allowing better detection of severed connection.
     '''
     pass
+
 
 class KeepAlive(object):
     '''
@@ -62,7 +64,7 @@ class KeepAlive(object):
 
     def ping(self):
         m = paramiko.Message()
-        m.add_byte(struct.pack('b',paramiko.common.MSG_GLOBAL_REQUEST))
+        m.add_byte(struct.pack('b', paramiko.common.MSG_GLOBAL_REQUEST))
         m.add_string('keepalive@openssh.com')
         m.add_boolean(True)
         self.transport._send_user_message(m)

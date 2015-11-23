@@ -105,7 +105,7 @@ class RadSSHConsole(object):
             return
         self.join()
         for line in self.recent_history.get(str(label)):
-            sys.stdout.write('STALLED: '+line)
+            sys.stdout.write('STALLED: ' + line)
 
     def console_thread(self):
         '''Background-able thread to pull from outputQ and format and print to screen'''
