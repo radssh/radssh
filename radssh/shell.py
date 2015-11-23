@@ -370,27 +370,22 @@ def radssh_shell_main():
     # Do the connections if needed, offer names to plugin lookup() functions
     hosts = []
     for arg in connect_list:
-        expanded = False
         for helper, resolver in loaded_plugins.items():
-            cluster = None
-            try:
-                cluster = resolver.lookup(arg)
-            except AttributeError as e:
-                # No lookup function in plugin, pass quietly
-                pass
-            except Exception as e:
-                print(repr(e))
-                pass
-            if cluster:
-                expanded = True
-                logger.debug('%s expanded by %s', arg, helper)
-                for label, host, conn in cluster:
-                    if conn:
-                        hosts.append((label, conn))
-                    else:
-                        hosts.append((label, host))
-                break
-        if not expanded:
+            if hasattr(resolver, 'lookup'):
+                try:
+                    cluster = resolver.lookup(arg)
+                    if cluster:
+                        logger.debug('%s expanded by %s', arg, helper)
+                        for label, host, conn in cluster:
+                            if conn:
+                                hosts.append((label, conn))
+                            else:
+                                hosts.append((label, host))
+                        break
+                except Exception as e:
+                    logger.error('Exception looking up %s via %s: %r', arg, helper, e)
+                    cluster = None
+        else:
             hosts.append((arg, arg))
 
     # Almost done with all the preliminary setup steps...
