@@ -645,6 +645,7 @@ class Cluster(object):
             self.console.status('Completed on %d/%d hosts' % (len(result), total))
 
         self.console.status('Ready')
+        self.console.join(True)
         user_abort.clear()
         self.last_result = result
         return result

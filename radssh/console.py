@@ -86,8 +86,10 @@ class RadSSHConsole(object):
             sys.stdout.write("\x1b]2;%s\x07" % message)
             sys.stdout.flush()
 
-    def join(self):
+    def join(self, clear_history=False):
         self.q.join()
+        if clear_history:
+            self.recent_history.clear()
 
     def message(self, message, label='CONSOLE'):
         '''Main thread can submit CONSOLE messages directly through instance'''
@@ -104,7 +106,7 @@ class RadSSHConsole(object):
         if not self.retain_recent:
             return
         self.join()
-        for line in self.recent_history.get(str(label)):
+        for line in self.recent_history.get(str(label), []):
             sys.stdout.write('STALLED: ' + line)
 
     def console_thread(self):
