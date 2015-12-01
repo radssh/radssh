@@ -114,7 +114,10 @@ class StreamBuffer(object):
             if len(self.buffer) > self.marker:
                 # Flush partial last line
                 pending = self.buffer[self.marker:]
-                self.queue.put_nowait((self.tag, pending.decode(self.encoding, 'replace')))
+                    try:
+                        self.queue.put((self.tag, pending.decode(self.encoding, 'replace')))
+                    except queue.Full:
+                        self.discards += 1
                 self.line_count += 1
         self.marker = len(self.buffer)
         self.active = False
