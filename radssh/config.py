@@ -167,6 +167,16 @@ def load_default_settings():
     # Start with the default_config settings from the module
     defaults = StringIO(default_config)
     settings = load_settings_file(defaults)
+    # Fill default username and character encodings from derived values
+    # not in the default_config template string.
+    if 'username' not in settings:
+        settings['username'] = os.environ.get(
+            'SSH_USER', os.environ.get('USER', os.environ.get('USERNAME', 'default')))
+    if 'character_encoding' not in settings:
+        if sys.stdout.encoding:
+            settings['character_encoding'] = sys.stdout.encoding
+        else:
+            settings['character_encoding'] = 'UTF-8'
     return settings
 
 
@@ -201,12 +211,6 @@ def load_settings(cmdline_args=[]):
             except ValueError:
                 warnings.warn(RuntimeWarning('Invalid command line option: %s (ignored)' % (arg)))
             cmdline_args.remove(arg)
-    # Fill username in from environments if not supplied from configuration source(s)
-    if 'username' not in settings:
-        settings['username'] = os.environ.get(
-            'SSH_USER', os.environ.get('USER', os.environ.get('USERNAME', 'default')))
-    if 'character_encoding' not in settings:
-        settings['character_encoding'] = sys.stdout.encoding
     return settings
 
 
