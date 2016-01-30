@@ -38,7 +38,7 @@ RadSSH Shell
 
 #. Do I need to create a .radssh_config settings file?
 
-   It is not manatory to have a ``~/.radssh_config`` file. Any settings that could be set in a config file can also be specified on the command line, via **--keyword=value** parameters. If you consistently use the same settings on the command line, it may be more convenient to save them in a config file.
+   It is not mandatory to have a ``~/.radssh_config`` file. Any settings that could be set in a config file can also be specified on the command line, via **--keyword=value** parameters. If you consistently use the same settings on the command line, it may be more convenient to save them in a config file.
 
 #. Can I change the username that RadSSH uses for login?
 
