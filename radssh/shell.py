@@ -269,7 +269,10 @@ class radssh_tab_handler(object):
 
 def radssh_shell_main():
     args = sys.argv[1:]
-    defaults = config.load_settings(args)
+    defaults = config.load_settings()
+    # Keep command line options separately, for reuse in sshconfig defaults
+    cmdline_options = config.command_line_settings(args, defaults.get('user.settings'))
+    defaults.update(cmdline_options)
 
     if 'socket.timeout' in defaults:
         socket.setdefaulttimeout(float(defaults['socket.timeout']))

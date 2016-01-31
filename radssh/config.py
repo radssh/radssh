@@ -180,7 +180,27 @@ def load_default_settings():
     return settings
 
 
-def load_settings(cmdline_args=[]):
+def command_line_settings(cmdline_args=[], permitted=True):
+    '''Load settings from command line args of the form "--keyword=value"'''
+    settings = {}
+    for arg in list(cmdline_args):
+        if arg.startswith('--'):
+            try:
+                k, v = arg.split('=', 1)
+                # Only apply command line option if user.settings is still enabled
+                if permitted:
+                    commandline_setting = {k[2:]: v}
+                    deprecated_check(commandline_setting, 'command line argument')
+                    settings.update(commandline_setting)
+                else:
+                    warnings.warn(RuntimeWarning('Command line option: %s (ignored) - User settings disabled by administrator' % (arg)))
+            except ValueError:
+                warnings.warn(RuntimeWarning('Invalid command line option: %s (ignored)' % (arg)))
+            cmdline_args.remove(arg)
+    return settings
+
+
+def load_settings(cmdline_args=None):
     '''Load a full settings dict from defaults, system, user, and command line settings'''
     settings = load_default_settings()
     # Also load the system-wide settings
@@ -197,20 +217,12 @@ def load_settings(cmdline_args=[]):
                 user_settings = load_settings_file(f)
                 deprecated_check(user_settings, user_settings_file)
                 settings.update(user_settings)
-    for arg in list(cmdline_args):
-        if arg.startswith('--'):
-            try:
-                k, v = arg.split('=', 1)
-                # Only apply command line option if user.settings is still enabled
-                if settings.get('user.settings'):
-                    commandline_setting = {k[2:]: v}
-                    deprecated_check(commandline_setting, 'command line argument')
-                    settings.update(commandline_setting)
-                else:
-                    warnings.warn(RuntimeWarning('Command line option: %s (ignored) - User settings disabled by administrator' % (arg)))
-            except ValueError:
-                warnings.warn(RuntimeWarning('Invalid command line option: %s (ignored)' % (arg)))
-            cmdline_args.remove(arg)
+    if cmdline_args and settings.get('user.settings'):
+        if isinstance(cmdline_args, list):
+            cmdline_dict = command_line_settings(cmdline_args)
+            settings.update(cmdline_dict)
+        else:
+            settings.update(cmdline_args)
     return settings
 
 
