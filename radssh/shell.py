@@ -41,9 +41,21 @@ with warnings.catch_warnings(record=True) as paramiko_load_warnings:
 
 from . import ssh
 from . import config
-from . import star_commands as star
 from .console import RadSSHConsole, monochrome
-import radssh.plugins
+try:
+    from . import star_commands as star
+    import radssh.plugins
+except ImportError:
+    class NullStarCommands(object):
+        '''Use stub if plugins or star_commands can not be loaded'''
+        @classmethod
+        def call(*args, **kwargs):
+            print('Plugins directory not found - *commands disabled')
+        star_help = call
+        star_info = call
+        commands = {'*help': star_help}
+
+    star = NullStarCommands()
 
 ################################################################################
 
