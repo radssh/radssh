@@ -163,14 +163,6 @@ class AuthManager(object):
         else:
             self.agent_connection = None
 
-        if include_userkeys:
-            for keyfile in ('~/.ssh/id_rsa', '~/.ssh/id_dsa', '~/.ssh/identity'):
-                k = os.path.expanduser(keyfile)
-                if os.path.exists(k):
-                    self.logger.debug('Deferred load of identity SSH key file (%s)', k)
-                    self.deferred_keys[k] = None
-                    self.add_key(k)
-
         if auth_file:
             self.read_auth_file(auth_file)
         # If we got nothing, prompt the user
@@ -236,11 +228,12 @@ class AuthManager(object):
         '''Append to a list of explicit keys to try, separate from any agent keys'''
         self.keys.append((filter, key))
 
-    def authenticate(self, T):
+    def authenticate(self, T, sshconfig={}):
         '''
         Try available ways to authenticate a paramiko Transport.
         Attempts are made in the following progression:
-        - User keys (~/.ssh/id_rsa, id_dsa, identity) if loaded
+        - Keys listed in ssh_config as IdentityFile
+        - User keys (~/.ssh/id_rsa, id_dsa, id_ecdsa) if loaded
         - Explicit keys loaded from authfile (for matched hostname/IP)
         - Keys available via SSH Agent (if enabled)
         - Passwords loaded from authfile
@@ -250,6 +243,11 @@ class AuthManager(object):
             return
         if not T.is_active():
             T.connect()
+        auth_user = sshconfig.get('user', self.default_user)
+        preferred_auth_types = []
+        for auth_type in ssh_config.get('preferredauthentications', ['publickey', 'password']):
+            if auth_type not in preferred_auth_types:
+                preferred_auth_types.append(auth_type)
         # Do an auth_none() call for 3 reasons:
         #    1) Get server response for available auth mechanisms
         #    2) OpenSSH 4.3 (CentOS5) fails to send banner unless this is done
@@ -257,53 +255,57 @@ class AuthManager(object):
         #    3) https://github.com/paramiko/paramiko/issues/432 workaround requires
         #       hacky save/restore of banner to keep Transport.get_banner() content
         try:
-            connected = False
-            save_banner = None
-            server_authtypes_supported = ['publickey', 'password']
+            auth_success = False
+            T.save_banner = None
+            server_authtypes_supported = preferred_auth_types
             if self.try_auth_none:
                 T.auth_none(self.default_user)
                 # If by some miracle or misconfiguration, auth_none succeeds...
                 return True
         except paramiko.BadAuthenticationType as e:
+            T.save_banner = T.auth_handler.get_banner()
             server_authtypes_supported = e.allowed_types
 
-        # Part 1: Save the banner from auth_none response
-        if hasattr(T, 'get_banner'):
-            save_banner = T.get_banner()
-
-        if 'publickey' in server_authtypes_supported:
-            # Try explicit keys first
-            connected = self.try_auth(T, self.keys)
-            # Next, try agent keys, if enabled
-            if not connected and self.agent_connection:
-                # possibly re-trigger key broker,
-                # then fabricate a list of filterless keys from ssh-agent
-                agent_connection = paramiko.Agent()
-                agent_keys = [(None, x) for x in agent_connection.get_keys()]
-                connected = self.try_auth(T, agent_keys)
-                # Early versions of Paramiko would raise exception if
-                # attempting to close Agent socket if there was no running ssh-agent
-                # AttributeError: Agent instance has no attribute 'conn'
-                try:
-                    agent_connection.close()
-                except AttributeError:
-                    pass
-
-        # Attempt password if applicable. Include keyboard-interactive as well,
-        # since it typically works with fallback, and we don't currently handle
-        # full scope of keyboard-interactive (yet)
-        if 'password' in server_authtypes_supported or 'keyboard-interactive' in server_authtypes_supported:
-            if not connected:
-                connected = self.try_auth(T, self.passwords, True)
-            # Final step - try a default password (unfiltered)
-            if not connected:
-                if self.default_password:
-                    connected = self.try_auth(T, [(None, self.default_password)], True)
+        # Go by ordering specified in ssh_config, only trying the ones accepted by the remote host
+        for auth_type in preferred_auth_types:
+            if auth_type not in server_authtypes_supported:
+                continue
+            if auth_type == 'publickey' and sshconfig.get('pubkeyauthentication', 'yes') == 'yes':
+                # Try explicit keys first
+                identity_keys = []
+                for keyfile in sshconfig.get('identityfile', ['~/.ssh/id_rsa', '~/.ssh/id_dsa', '~/.ssh/id_ecdsa']):
+                    k = os.path.expanduser(keyfile)
+                    if os.path.exists(k):
+                        if k not in self.deferred_keys:
+                            self.deferred_keys[k] = None
+                        identity_keys.append((None, k))
+                auth_success = self.try_auth(T, identity_keys, False, auth_user)
+                if auth_success:
+                    break
+                if sshconfig.get('identitiesonly', 'no') == 'no':
+                    # Try loaded authmgr keys
+                    auth_success = self.try_auth(T, self.keys, False, auth_user)
+                    if auth_success:
+                        break
+                    # Next, try agent keys, if enabled
+                    if self.agent_connection:
+                        agent_connection = paramiko.Agent()
+                        agent_keys = [(None, x) for x in agent_connection.get_keys()]
+                        auth_success = self.try_auth(T, agent_keys, False, auth_user)
+                        # Early versions of Paramiko would raise exception if
+                        # attempting to close Agent socket if there was no running ssh-agent
+                        # AttributeError: Agent instance has no attribute 'conn'
+                        try:
+                            agent_connection.close()
+                        except AttributeError:
+                            pass
+                        if auth_success:
+                            break
 
         # Part 2 of save_banner workaround - shove it into the current auth_handler
-        if hasattr(T, 'get_banner') and save_banner:
-            T.auth_handler.banner = save_banner
-        return connected
+        if T.save_banner:
+            T.auth_handler.banner = T.save_banner
+        return auth_success
 
     def interactive_password(self):
         self.default_password = PlainText(getpass.getpass(
@@ -317,7 +319,9 @@ class AuthManager(object):
                'Enabled' if self.agent_connection else 'Disabled',
                len(self.passwords))
 
-    def try_auth(self, T, candidates, as_password=False):
+    def try_auth(self, T, candidates, as_password=False, auth_user=None):
+        if not auth_user:
+            auth_user=sellf.default_user
         for filter, value in candidates:
             if filter and filter != '*':
                 remote_ip = netaddr.IPAddress(T.getpeername()[0])
@@ -346,7 +350,7 @@ class AuthManager(object):
                     # Quirky Force10 servers seem to request further password attempt
                     # for a second stage - retry password as long as it is listed as an option
                     while True:
-                        if 'password' not in T.auth_password(self.default_user, str(key)):
+                        if 'password' not in T.auth_password(auth_user, str(key)):
                             break
                 else:
                     # Actual keys may not be loaded yet. Only loaded when actively used, so

@@ -401,7 +401,7 @@ def radssh_shell_main():
                     logger.error('Exception looking up %s via %s: %r', arg, helper, e)
                     cluster = None
         else:
-            hosts.append((arg, arg))
+            hosts.append((arg, None))
 
     # Almost done with all the preliminary setup steps...
     if defaults['loglevel'] not in ('CRITICAL', 'ERROR'):
