@@ -30,7 +30,6 @@ with warnings.catch_warnings(record=True):
 import netaddr
 
 from .pkcs import PKCS_OAEP, PKCSError
-from .hostkey import printable_fingerprint
 
 
 class PlainText(object):
@@ -321,7 +320,7 @@ class AuthManager(object):
 
     def try_auth(self, T, candidates, as_password=False, auth_user=None):
         if not auth_user:
-            auth_user=sellf.default_user
+            auth_user = self.default_user
         for filter, value in candidates:
             if filter and filter != '*':
                 remote_ip = netaddr.IPAddress(T.getpeername()[0])
@@ -389,6 +388,7 @@ class AuthManager(object):
 
 if __name__ == '__main__':
     import sys
+    from .known_hosts import printable_fingerprint
     logging.basicConfig(level=logging.ERROR)
     if not sys.argv[1:]:
         print('RadSSH AuthManager')

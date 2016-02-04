@@ -86,6 +86,74 @@ def find_all_keys(hostname, port=22):
             yield key
 
 
+def verify_transport_key(t, hostname, port, sshconfig):
+    '''
+    With an active transport, verify the host key against known_hosts.
+    Log and raise exception if key fails to pass verification.
+    '''
+    add_host_entry = add_ip_entry = False
+    hostkey = t.get_remote_server_key()
+    sys_known_hosts = load(sshconfig.get('globalknownhostsfile', '/etc/ssh/ssh_known_hosts'))
+    user_known_hosts = load(sshconfig.get('userknownhostsfile', '~/.ssh/known_hosts'))
+    keys = list(sys_known_hosts.matching_keys(hostname, int(port)))
+    keys.extend(user_known_hosts.matching_keys(hostname, int(port)))
+    for x in keys:
+        if x.key.get_name() == hostkey.get_name():
+            if x.key.get_fingerprint() == hostkey.get_fingerprint():
+                break
+            # Key types match, but not fingerprint
+            logging.getLogger('radssh').warning('Host %s failed SSH key validation' % hostname)
+            raise Exception('Host failed SSH key validation: %s' % hostname)
+    else:
+        # No match found
+        if sshconfig.get('stricthostkeychecking', 'ask') == 'yes':
+            logging.getLogger('radssh').warning('No host key found for %s and StrictHostKeyChecking=yes' % hostname
+            raise Exception('Missing known_hosts entry for: %s' % hostname)
+        add_host_entry = True
+    # Check key for IP entry as well?
+    if sshconfig.get('checkhostip', 'no') == 'yes':
+        verify_ip = t.getpeername()[0]
+        keys = list(sys_known_hosts.matching_keys(verify_ip, int(port)))
+        keys.extend(user_known_hosts.matching_keys(verify_ip, int(port)))
+        for x in keys:
+            if x.key.get_name() == hostkey.get_name():
+                break
+            logging.getLogger('radssh').warning('Host %s (IP %s) failed SSH key validation' % (hostname, verify_ip)
+            raise Exception('Host failed SSH key validation: %s' % host)
+    else:
+        # No match found for IP
+        if sshconfig.get('stricthostkeychecking', 'ask') == 'yes':
+            logging.getLogger('radssh').warning('No host key found for %s (IP %s) and StrictHostKeyChecking=yes' % (hostname, verify_ip)
+            raise Exception('Missing known_hosts entry for: %s' % verify_ip)
+        add_ip_entry = True
+
+    if not add_host_entry and not add_ip_entry:
+        return
+    entries = []
+    if add_host_entry:
+        if port == '22':
+            entries.append(hostname)
+        else:
+            entries.append('[%s]:%s]' % (hostname, port))
+    if add_ip_entry:
+        if port == '22':
+            entries.append(verify_ip)
+        else:
+            entries.append('[%s]:%s]' % (verify_ip, port))
+    if sshconfig.get('stricthostkeychecking', 'ask') == 'no':
+        add_key = user_known_hosts.add
+    else:
+        add_key = user_known_hosts.conditional_add
+
+    if sshconfig.get('hashknownhosts', 'no') == 'yes':
+        # Each hashed entry must be added independently
+        for keyval in entries:
+            add_key(keyval, hostkey, True)
+    else:
+        # Add host and IP entry as a single line
+        add_key(','.join(entries), hostkey, False)
+
+
 class KnownHosts (object):
     '''
     Implementation of SSH known_hosts file as a searchable object.
@@ -134,6 +202,8 @@ class KnownHosts (object):
                 self._index[hostname].append(lineno)
             self._lines.append('%s %s %s' %
                                (hostname, keytype, keyval))
+            if self._filename:
+                self.save()
         logging.getLogger('radssh.keys').info('Added new known_hosts entry for %s [%s]' % (hostname, printable_fingerprint(key)))
         return HostKeyEntry([hostname], key, lineno=lineno)
 
@@ -259,8 +329,6 @@ class KnownHosts (object):
                 if reply.upper() == 'A':
                     unconditional_add = True
                 self.add(host, key, hash_hostname)
-            if self._filename:
-                self.save()
         return True
 
 

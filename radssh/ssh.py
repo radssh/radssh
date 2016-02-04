@@ -37,7 +37,8 @@ from .authmgr import AuthManager
 from .streambuffer import StreamBuffer
 from .dispatcher import Dispatcher, UnfinishedJobs
 from .console import RadSSHConsole
-from .hostkey import HostKeyVerifier
+#from .hostkey import HostKeyVerifier
+from . import known_hosts
 from . import config
 from .keepalive import KeepAlive, ServerNotResponding
 
@@ -120,7 +121,8 @@ class Chunker(object):
         yield self.data[-1]
 
 
-def connection_worker(host, conn, auth, key_verifier=None, sshconfig={}):
+def connection_worker(host, conn, auth, sshconfig={}):
+    check_host_key = True
     if not conn:
         conn = sshconfig.get('hostname', host)
     if isinstance(conn, basestring):
@@ -136,21 +138,31 @@ def connection_worker(host, conn, auth, key_verifier=None, sshconfig={}):
         # Reuse of established Transport, don't overwrite name
         # and don't bother doing host key verification
         t = conn
-        key_verifier = None
+        check_host_key = False
     else:
         # Socket (or sock-like) which is a probably a tunneled connection
         t = paramiko.Transport(conn)
         t.setName(host)
     t.set_log_channel('radssh.paramiko')
     try:
-        if key_verifier:
+        if check_host_key:
             verify_host = sshconfig.get('hostkeyalias', str(host))
+            sys_known_hosts = known_hosts.load(sshconfig.get('globalknownhostsfile', '/etc/ssh/ssh_known_hosts'))
+            user_known_hosts = known_hosts.load(sshconfig.get('userknownhostsfile', '~/.ssh/known_hosts'))
+            keys = list(sys_known_hosts.matching_keys(verify_host, int(port)))
+            keys.extend(user_known_hosts.matching_keys(verify_host, int(port)))
+            if keys:
+                # Only request the key types from known_hosts
+                t._preferred_keys = [x.key.get_name() for x in keys]
+            else:
+                # Order per HostKeyAlgorithms, or bump Paramiko precedence of ECDSA
+                t._preferred_keys = sshconfig.get('hostkeyalgorithms', 'ecdsa-sha2-nistp256,ssh-rsa,ssh-dss').split(',')
             if not t.is_active():
                 t.start_client()
-            valid = key_verifier.verify_host_key(verify_host, t.get_remote_server_key())
-            if not valid:
-                logging.getLogger('radssh').warning('Host failed SSH key validation: %s' % host)
-                raise Exception('Host failed SSH key validation: %s' % host)
+            # Do the key verification based on sshconfig settings
+            known_hosts.verify_transport_key(t, verify_host, int(port), sshconfig)
+
+            
     except Exception as e:
         logging.getLogger('radssh').error('Unable to verify host key for %s\n%s', verify_host, repr(e))
         print('Unable to verify host key for', host)
@@ -345,8 +357,8 @@ class Cluster(object):
         self.chunk_size = None
         self.chunk_delay = 0
         self.output_mode = self.defaults['output_mode']
-        self.hkv = HostKeyVerifier(self.defaults['hostkey.verify'],
-                                   self.defaults['hostkey.known_hosts'])
+        #self.hkv = HostKeyVerifier(self.defaults['hostkey.verify'],
+                                   #self.defaults['hostkey.known_hosts'])
         self.sshconfig = paramiko.SSHConfig()
         user_config = open(os.path.expanduser('~/.ssh/config'))
         self.sshconfig.parse(user_config)
@@ -359,15 +371,14 @@ class Cluster(object):
         self.sshconfig.parse(system_config)
         system_config.close()
 
-
         for label, conn in hostlist:
             if mux:
                 for idx, mux_var in enumerate(mux.get(label, [])):
                     mux_label = '%s:%d' % (label, idx)
-                    self.pending[self.dispatcher.submit(connection_worker, mux_label, conn, self.auth, self.hkv, self.sshconfig.lookup(label))] = label
+                    self.pending[self.dispatcher.submit(connection_worker, mux_label, conn, self.auth, self.sshconfig.lookup(label))] = label
                     self.mux[mux_label] = mux_var
             else:
-                self.pending[self.dispatcher.submit(connection_worker, label, conn, self.auth, self.hkv, self.sshconfig.lookup(label))] = label
+                self.pending[self.dispatcher.submit(connection_worker, label, conn, self.auth, self.sshconfig.lookup(label))] = label
         self.update_connections()
         # Start remainder of dispatcher threads
         self.dispatcher.start_threads(len(self.connections))
@@ -474,7 +485,7 @@ class Cluster(object):
             except Exception as e:
                 self.console.message('%s - %s' % (str(k), str(e)), 'EXCEPTION')
 
-            self.pending[self.dispatcher.submit(connection_worker, k, conn, retry, self.hkv, self.sshconfig.lookup(k))] = k
+            self.pending[self.dispatcher.submit(connection_worker, k, conn, retry, self.sshconfig.lookup(k))] = k
         self.update_connections()
 
     def tunnel_connections(self, hostlist, jumpbox=None):
