@@ -162,7 +162,7 @@ def connection_worker(host, conn, auth, sshconfig={}):
             # Do the key verification based on sshconfig settings
             known_hosts.verify_transport_key(t, verify_host, int(port), sshconfig)
 
-            
+
     except Exception as e:
         logging.getLogger('radssh').error('Unable to verify host key for %s\n%s', verify_host, repr(e))
         print('Unable to verify host key for', host)
@@ -360,16 +360,21 @@ class Cluster(object):
         #self.hkv = HostKeyVerifier(self.defaults['hostkey.verify'],
                                    #self.defaults['hostkey.known_hosts'])
         self.sshconfig = paramiko.SSHConfig()
-        user_config = open(os.path.expanduser('~/.ssh/config'))
-        self.sshconfig.parse(user_config)
-        user_config.close()
+        try:
+            with open(os.path.expanduser('~/.ssh/config')) as user_config:
+                self.sshconfig.parse(user_config)
+        except IOError as e:
+            logging.getLogger('radssh').warning('Unable to process user ssh_config file: %s', e)
         if os.path.isdir('/etc/ssh'):
-            system_config = open('/etc/ssh/ssh_config')
+            system_config = '/etc/ssh/ssh_config'
         else:
             # OSX location
-            system_config = open('/etc/ssh_config')
-        self.sshconfig.parse(system_config)
-        system_config.close()
+            system_config = '/etc/ssh_config'
+        try:
+            with open(system_config) as sysconfig:
+                self.sshconfig.parse(sysconfig)
+        except IOError as e:
+            logging.getLogger('radssh').warning('Unable to process system ssh_config file (%s): %s', system_config, e)
 
         for label, conn in hostlist:
             if mux:

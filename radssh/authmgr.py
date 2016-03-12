@@ -244,7 +244,7 @@ class AuthManager(object):
             T.connect()
         auth_user = sshconfig.get('user', self.default_user)
         preferred_auth_types = []
-        for auth_type in ssh_config.get('preferredauthentications', ['publickey', 'password']):
+        for auth_type in sshconfig.get('preferredauthentications', ['publickey', 'password']):
             if auth_type not in preferred_auth_types:
                 preferred_auth_types.append(auth_type)
         # Do an auth_none() call for 3 reasons:

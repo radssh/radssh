@@ -55,8 +55,10 @@ def load(filename):
         if filename not in _loaded_files:
             try:
                 _loaded_files[filename] = KnownHosts(filename)
-            except IOError:
+            except IOError as e:
+                logging.getLogger('radssh.keys').info('Unable to load known_hosts from %s: %s' % (filename, str(e)))
                 _loaded_files[filename] = KnownHosts()
+                _loaded_files[filename]._filename = filename
     return _loaded_files[filename]
 
 
@@ -102,12 +104,12 @@ def verify_transport_key(t, hostname, port, sshconfig):
             if x.key.get_fingerprint() == hostkey.get_fingerprint():
                 break
             # Key types match, but not fingerprint
-            logging.getLogger('radssh').warning('Host %s failed SSH key validation' % hostname)
-            raise Exception('Host failed SSH key validation: %s' % hostname)
+            logging.getLogger('radssh.keys').warning('Host %s failed SSH key validation - conflicting entry [%s:%d]' % (hostname, x.filename, x.lineno))
+            raise Exception('Host %s failed SSH key validation - conflicting entry [%s:%d]' % (hostname, x.filename, x.lineno))
     else:
         # No match found
         if sshconfig.get('stricthostkeychecking', 'ask') == 'yes':
-            logging.getLogger('radssh').warning('No host key found for %s and StrictHostKeyChecking=yes' % hostname
+            logging.getLogger('radssh.keys').warning('No host key found for %s and StrictHostKeyChecking=yes' % hostname)
             raise Exception('Missing known_hosts entry for: %s' % hostname)
         add_host_entry = True
     # Check key for IP entry as well?
@@ -117,29 +119,32 @@ def verify_transport_key(t, hostname, port, sshconfig):
         keys.extend(user_known_hosts.matching_keys(verify_ip, int(port)))
         for x in keys:
             if x.key.get_name() == hostkey.get_name():
-                break
-            logging.getLogger('radssh').warning('Host %s (IP %s) failed SSH key validation' % (hostname, verify_ip)
-            raise Exception('Host failed SSH key validation: %s' % host)
-    else:
-        # No match found for IP
-        if sshconfig.get('stricthostkeychecking', 'ask') == 'yes':
-            logging.getLogger('radssh').warning('No host key found for %s (IP %s) and StrictHostKeyChecking=yes' % (hostname, verify_ip)
-            raise Exception('Missing known_hosts entry for: %s' % verify_ip)
-        add_ip_entry = True
+                if x.key.get_fingerprint() == hostkey.get_fingerprint():
+                    break
+                logging.getLogger('radssh.keys').warning('Host %s (IP %s) failed SSH key validation - conflicting entry [%s:%d]' %
+                    (hostname, verify_ip, x.filename, x.lineno))
+                raise Exception('Host %s (IP %s) failed SSH key validation - conflicting entry [%s:%d]' %
+                    (hostname, verify_ip, x.filename, x.lineno))
+        else:
+            # No match found for IP
+            if sshconfig.get('stricthostkeychecking', 'ask') == 'yes':
+                logging.getLogger('radssh.keys').warning('No host key found for %s (IP %s) and StrictHostKeyChecking=yes' % (hostname, verify_ip))
+                raise Exception('Missing known_hosts entry for: %s' % verify_ip)
+            add_ip_entry = True
 
     if not add_host_entry and not add_ip_entry:
         return
     entries = []
     if add_host_entry:
-        if port == '22':
+        if int(port) == 22:
             entries.append(hostname)
         else:
-            entries.append('[%s]:%s]' % (hostname, port))
+            entries.append('[%s:%s]' % (hostname, port))
     if add_ip_entry:
-        if port == '22':
+        if int(port) == 22:
             entries.append(verify_ip)
         else:
-            entries.append('[%s]:%s]' % (verify_ip, port))
+            entries.append('[%s:%s]' % (verify_ip, port))
     if sshconfig.get('stricthostkeychecking', 'ask') == 'no':
         add_key = user_known_hosts.add
     else:
@@ -148,10 +153,12 @@ def verify_transport_key(t, hostname, port, sshconfig):
     if sshconfig.get('hashknownhosts', 'no') == 'yes':
         # Each hashed entry must be added independently
         for keyval in entries:
-            add_key(keyval, hostkey, True)
+            if not add_key(keyval, hostkey, True):
+                raise Exception('Declined host key for %s - aborting connection' % keyval)
     else:
         # Add host and IP entry as a single line
-        add_key(','.join(entries), hostkey, False)
+        if not add_key(','.join(entries), hostkey, False):
+            raise Exception('Declined host key for %s - aborting connection' % ','.join(entries))
 
 
 class KnownHosts (object):
@@ -204,7 +211,7 @@ class KnownHosts (object):
                                (hostname, keytype, keyval))
             if self._filename:
                 self.save()
-        logging.getLogger('radssh.keys').info('Added new known_hosts entry for %s [%s]' % (hostname, printable_fingerprint(key)))
+        logging.getLogger('radssh.keys').info('Added new known_hosts entry for %s [%s] to %s' % (hostname, printable_fingerprint(key), self._filename))
         return HostKeyEntry([hostname], key, lineno=lineno)
 
     def load(self, filename):
