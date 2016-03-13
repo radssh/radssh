@@ -147,6 +147,39 @@ def connection_worker(host, conn, auth, sshconfig={}):
                 logging.getLogger('radssh').debug('LocalCommand "%s" completed with return code %d', cmd, p.wait())
         t = paramiko.Transport(s)
         t.setName(host)
+        ciphers = sshconfig.get('ciphers')
+        if ciphers:
+            logging.getLogger('radssh').debug('Limit Ciphers to %s', ciphers)
+            preferred = []
+            for name in ciphers.split(','):
+                if name in t._preferred_ciphers:
+                    preferred.append(name)
+                else:
+                    logging.getLogger('radssh').debug('Ignoring cipher %s (not supported by Paramiko)', name)
+            t._preferred_ciphers = tuple(preferred)
+            logging.getLogger('radssh').debug('Setting Paramiko _preferred_ciphers to %s', t._preferred_ciphers)
+        kex_algorithms = sshconfig.get('kexalgorithms')
+        if kex_algorithms:
+            logging.getLogger('radssh').debug('Limit KexAlgorithms to %s', kex_algorithms)
+            preferred = []
+            for name in kex_algorithms.split(','):
+                if name in t._preferred_kex:
+                    preferred.append(name)
+                else:
+                    logging.getLogger('radssh').debug('Ignoring KexAlgorithm %s (not supported by Paramiko)', name)
+            t._preferred_kex = tuple(preferred)
+            logging.getLogger('radssh').debug('Setting Paramiko _preferred_kex to %s', t._preferred_kex)
+        macs = sshconfig.get('macs')
+        if macs:
+            logging.getLogger('radssh').debug('Limit MACs to %s', macs)
+            preferred = []
+            for name in macs.split(','):
+                if name in t._preferred_macs:
+                    preferred.append(name)
+                else:
+                    logging.getLogger('radssh').debug('Ignoring MAC %s (not supported by Paramiko)', name)
+            t._preferred_macs = tuple(preferred)
+            logging.getLogger('radssh').debug('Setting Paramiko _preferred_macs to %s', t._preferred_macs)
     elif isinstance(conn, paramiko.Transport):
         # Reuse of established Transport, don't overwrite name
         # and don't bother doing host key verification
