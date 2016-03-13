@@ -26,6 +26,8 @@ import netaddr
 import re
 import getpass
 import logging
+import shlex
+import subprocess
 try:
     import queue
 except ImportError:
@@ -130,8 +132,19 @@ def connection_worker(host, conn, auth, sshconfig={}):
             conn, port = conn.split(':', 1)
         else:
             port = sshconfig.get('port', '22')
-        # hostname is a potentially fake label, use conn as actual connection destination
-        s = socket.create_connection((conn, int(port)), timeout=sshconfig.get('connecttimeout'))
+        proxy = sshconfig.get('proxycommand')
+        if proxy:
+            logging.getLogger('radssh').info('Connecting to %s via ProxyCommand "%s"', host, proxy)
+            s = paramiko.ProxyCommand(proxy)
+        else:
+            # hostname is a potentially fake label, use conn as actual connection destination
+            s = socket.create_connection((conn, int(port)), timeout=sshconfig.get('connecttimeout'))
+        if sshconfig.get('permitlocalcommand', 'no') == 'yes':
+            cmd = sshconfig.get('localcommand')
+            if cmd:
+                logging.getLogger('radssh').info('Executing LocalCommand "%s" for connection to %s', cmd, conn)
+                p = subprocess.Popen(shlex.split(cmd))
+                logging.getLogger('radssh').debug('LocalCommand "%s" completed with return code %d', cmd, p.wait())
         t = paramiko.Transport(s)
         t.setName(host)
     elif isinstance(conn, paramiko.Transport):
