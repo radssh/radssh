@@ -128,8 +128,8 @@ def verify_transport_key(t, hostname, port, sshconfig):
         else:
             # No match found for IP
             if sshconfig.get('stricthostkeychecking', 'ask') == 'yes':
-                logging.getLogger('radssh.keys').warning('No host key found for %s (IP %s) and StrictHostKeyChecking=yes' % (hostname, verify_ip))
-                raise Exception('Missing known_hosts entry for: %s' % verify_ip)
+                logging.getLogger('radssh.keys').warning('No host key found for IP %s (%s) and StrictHostKeyChecking=yes' % (verify_ip, hostname))
+                raise Exception('Missing known_hosts entry for IP: %s (%s)' % (verify_ip, hostname))
             add_ip_entry = True
 
     if not add_host_entry and not add_ip_entry:

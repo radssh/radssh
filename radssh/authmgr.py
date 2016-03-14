@@ -86,7 +86,7 @@ def _importKey(filename, allow_prompt=True, logger=None):
     except paramiko.PasswordRequiredException:
         # Need passphrase for RSA key
         if not allow_prompt:
-            raise
+            return RuntimeError('RSA Key is Passphrase-Protected')
         retries = 3
         while retries:
             try:
@@ -104,6 +104,34 @@ def _importKey(filename, allow_prompt=True, logger=None):
     if logger:
         logger.debug('Failed to load %s as RSA key\n\t%s', filename, repr(rsa_exception))
 
+    # Format error - could be ECDSA key instead...
+    try:
+        key = paramiko.ECDSAKey(filename=filename)
+        if logger:
+            logger.debug('Loaded unprotected ECDSA key from %s', filename)
+        return key
+    except paramiko.PasswordRequiredException:
+        # Need passphrase for ECDSA key
+        if not allow_prompt:
+            return RuntimeError('ECDSA Key is Passphrase-Protected')
+        retries = 3
+        while retries:
+            try:
+                passphrase = getpass.getpass('Enter passphrase for ECDSA key [%s]: ' % filename)
+                key = paramiko.ECDSAKey(filename=filename, password=passphrase)
+                if logger:
+                    logger.debug('Loaded passphrase protected ECDSA key from %s', filename)
+                return key
+            except paramiko.SSHException as e:
+                print(repr(e))
+                retries -= 1
+        return Exception('3 failed passphrase attempts for %s' % filename)
+    except paramiko.SSHException as e:
+        ecdsa_exception = e
+
+    if logger:
+        logger.debug('Failed to load %s as ECDSA key\n\t%s', filename, repr(ecdsa_exception))
+
     # Format error - could be DSA key instead...
     try:
         key = paramiko.DSSKey(filename=filename)
@@ -113,7 +141,7 @@ def _importKey(filename, allow_prompt=True, logger=None):
     except paramiko.PasswordRequiredException:
         # Need passphrase for DSA key
         if not allow_prompt:
-            raise
+            return RuntimeError('DSA Key is Passphrase-Protected')
         retries = 3
         while retries:
             try:
@@ -133,7 +161,7 @@ def _importKey(filename, allow_prompt=True, logger=None):
         logger.debug('Failed to load %s as DSA key\n\t%s', filename, repr(dsa_exception))
     # Give up on using this key
     if logger:
-        logger.error('Unable to load key from [%s] | RSA failure: %r | DSA failure: %r' % (filename, rsa_exception, dsa_exception))
+        logger.error('Unable to load key from [%s] | RSA failure: %r | ECDSA failure: %r | DSA failure: %r' % (filename, rsa_exception, ecdsa_exception, dsa_exception))
     # Return, rather than raise the exception - Caller just needs something to
     # fill the deferred_keys entry with that's not a paramiko.PKey and not None.
     return RuntimeError('Unrecognized key: %s' % filename)
@@ -243,6 +271,7 @@ class AuthManager(object):
         if not T.is_active():
             T.connect()
         auth_user = sshconfig.get('user', self.default_user)
+        allow_prompt = sshconfig.get('batchmode', 'no') == 'no'
         preferred_auth_types = []
         for auth_type in sshconfig.get('preferredauthentications', ['publickey', 'password']):
             if auth_type not in preferred_auth_types:
@@ -278,12 +307,12 @@ class AuthManager(object):
                         if k not in self.deferred_keys:
                             self.deferred_keys[k] = None
                         identity_keys.append((None, k))
-                auth_success = self.try_auth(T, identity_keys, False, auth_user)
+                auth_success = self.try_auth(T, identity_keys, False, auth_user, allow_prompt=allow_prompt)
                 if auth_success:
                     break
                 if sshconfig.get('identitiesonly', 'no') == 'no':
                     # Try loaded authmgr keys
-                    auth_success = self.try_auth(T, self.keys, False, auth_user)
+                    auth_success = self.try_auth(T, self.keys, False, auth_user, allow_prompt=allow_prompt)
                     if auth_success:
                         break
                     # Next, try agent keys, if enabled
@@ -300,6 +329,15 @@ class AuthManager(object):
                             pass
                         if auth_success:
                             break
+            elif (auth_type == 'password' and sshconfig.get('passwordauthentication', 'yes') == 'yes') or \
+                (auth_type == 'keyboard-interactive' and sshconfig.get('kbdinteractiveauthentication', 'yes') == 'yes'):
+                # Paramiko will fake keyboard-interactive as password authentication
+                auth_success = self.try_auth(T, self.passwords, True, auth_user, allow_prompt=allow_prompt)
+                if auth_success:
+                    break
+                # Try default password if it is set
+                if self.default_password:
+                    auth_success = self.try_auth(T, [(None, self.default_password)], True, auth_user)
 
         # Part 2 of save_banner workaround - shove it into the current auth_handler
         if T.save_banner:
@@ -318,7 +356,7 @@ class AuthManager(object):
                'Enabled' if self.agent_connection else 'Disabled',
                len(self.passwords))
 
-    def try_auth(self, T, candidates, as_password=False, auth_user=None):
+    def try_auth(self, T, candidates, as_password=False, auth_user=None, allow_prompt=True):
         if not auth_user:
             auth_user = self.default_user
         for filter, value in candidates:
@@ -366,14 +404,14 @@ class AuthManager(object):
                         # limit to single thread for the _importKey() call
                         with self.import_lock:
                             if not self.deferred_keys[value]:
-                                self.deferred_keys[value] = _importKey(value, logger=self.logger)
+                                self.deferred_keys[value] = _importKey(value, allow_prompt=allow_prompt, logger=self.logger)
                         key = self.deferred_keys[value]
                     else:
                         # Deferred and already loaded
                         key = self.deferred_keys[value]
                     try:
                         if isinstance(key, paramiko.PKey):
-                            T.auth_publickey(self.default_user, key)
+                            T.auth_publickey(auth_user, key)
                         else:
                             self.logger.error('Skipping SSH key %s (%s)', value, str(key))
                     except paramiko.BadAuthenticationType as e:

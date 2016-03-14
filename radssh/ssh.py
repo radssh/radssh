@@ -125,24 +125,30 @@ class Chunker(object):
 
 def connection_worker(host, conn, auth, sshconfig={}):
     check_host_key = True
+    # host is the label of the host, conn is the "real" name/ip to connect
+    # to, or an already established socket-like object. If conn is not
+    # filled in, use the label as the hostname.
     if not conn:
-        conn = sshconfig.get('hostname', host)
+        conn = host
     if isinstance(conn, basestring):
         if ':' in conn:
+            # This will break when using IPv6 addresses...
             conn, port = conn.split(':', 1)
         else:
             port = sshconfig.get('port', '22')
+        hostname = sshconfig.get('hostname', conn)
         proxy = sshconfig.get('proxycommand')
         if proxy:
-            logging.getLogger('radssh').info('Connecting to %s via ProxyCommand "%s"', host, proxy)
+            logging.getLogger('radssh').info('Connecting to %s via ProxyCommand "%s"', hostname, proxy)
             s = paramiko.ProxyCommand(proxy)
         else:
             # hostname is a potentially fake label, use conn as actual connection destination
-            s = socket.create_connection((conn, int(port)), timeout=sshconfig.get('connecttimeout'))
+            s = socket.create_connection((hostname, int(port)), timeout=sshconfig.get('connecttimeout'))
         if sshconfig.get('permitlocalcommand', 'no') == 'yes':
             cmd = sshconfig.get('localcommand')
             if cmd:
-                logging.getLogger('radssh').info('Executing LocalCommand "%s" for connection to %s', cmd, conn)
+                logging.getLogger('radssh').info('Executing LocalCommand "%s" for connection to %s', cmd, hostname)
+                # Self-inflicted harm if this never returns...
                 p = subprocess.Popen(shlex.split(cmd))
                 logging.getLogger('radssh').debug('LocalCommand "%s" completed with return code %d', cmd, p.wait())
         t = paramiko.Transport(s)
@@ -188,11 +194,13 @@ def connection_worker(host, conn, auth, sshconfig={}):
     else:
         # Socket (or sock-like) which is a probably a tunneled connection
         t = paramiko.Transport(conn)
+        port = t.getpeername()[1]
         t.setName(host)
+        hostname = host
     t.set_log_channel('radssh.paramiko')
     try:
         if check_host_key:
-            verify_host = sshconfig.get('hostkeyalias', str(host))
+            verify_host = sshconfig.get('hostkeyalias', str(hostname))
             sys_known_hosts = known_hosts.load(sshconfig.get('globalknownhostsfile', '/etc/ssh/ssh_known_hosts'))
             user_known_hosts = known_hosts.load(sshconfig.get('userknownhostsfile', '~/.ssh/known_hosts'))
             keys = list(sys_known_hosts.matching_keys(verify_host, int(port)))
@@ -211,10 +219,10 @@ def connection_worker(host, conn, auth, sshconfig={}):
 
     except Exception as e:
         logging.getLogger('radssh').error('Unable to verify host key for %s\n%s', verify_host, repr(e))
-        print('Unable to verify host key for', host)
+        print('Unable to verify host key for', verify_host)
         print(repr(e))
         t.close()
-        print('Connection to %s closed.' % str(host))
+        print('Connection to %s closed.' % str(hostname))
         return t
     # After connection and passing host key verification, now try to authenticate
     auth.authenticate(t, sshconfig)
@@ -426,10 +434,10 @@ class Cluster(object):
             if mux:
                 for idx, mux_var in enumerate(mux.get(label, [])):
                     mux_label = '%s:%d' % (label, idx)
-                    self.pending[self.dispatcher.submit(connection_worker, mux_label, conn, self.auth, self.sshconfig.lookup(label))] = label
+                    self.pending[self.dispatcher.submit(connection_worker, mux_label, conn, self.auth, self.sshconfig.lookup(str(label)))] = label
                     self.mux[mux_label] = mux_var
             else:
-                self.pending[self.dispatcher.submit(connection_worker, label, conn, self.auth, self.sshconfig.lookup(label))] = label
+                self.pending[self.dispatcher.submit(connection_worker, label, conn, self.auth, self.sshconfig.lookup(str(label)))] = label
         self.update_connections()
         # Start remainder of dispatcher threads
         self.dispatcher.start_threads(len(self.connections))
@@ -535,8 +543,9 @@ class Cluster(object):
                             pass
             except Exception as e:
                 self.console.message('%s - %s' % (str(k), str(e)), 'EXCEPTION')
-
-            self.pending[self.dispatcher.submit(connection_worker, k, conn, retry, self.sshconfig.lookup(k))] = k
+            # For Reauth, do not pass sshconfig options since we're just trying to force a password authentication
+            # self.pending[self.dispatcher.submit(connection_worker, k, conn, retry, self.sshconfig.lookup(str(k)))] = k
+            self.pending[self.dispatcher.submit(connection_worker, k, conn, retry, {'identityfile': []})] = k
         self.update_connections()
 
     def tunnel_connections(self, hostlist, jumpbox=None):
