@@ -632,7 +632,7 @@ class Cluster(object):
         '''Set active set of connections via list of fnmatch/IP patterns to limit run_command; pass in None to reset to enable all connections'''
         self.disabled = set()
         if enable_list is None:
-            self.console.q.put((('ENABLED', True), 'All hosts currently enabled'))
+            self.console.q.put((('ENABLED', True), 'All %d hosts currently enabled' % len(self.connections)))
             return
         if isinstance(enable_list, basestring):
             # Handle single value being passed instead of list
@@ -781,6 +781,7 @@ class Cluster(object):
             self.console.status('Completed on %d/%d hosts' % (len(result), total))
 
         self.console.status('Ready')
+        # join(True) here causes the last_lines buffer to be cleared
         self.console.join(True)
         user_abort.clear()
         self.last_result = result

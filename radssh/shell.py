@@ -99,7 +99,8 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                     print('You really don\'t want to run %s without a TTY, do you?' % initial_command)
                     continue
                 if initial_command in defaults['commands.restricted'].split(','):
-                    print('Whoa, Cowboy! Are you sure you want to run the following command, Tex?')
+                    print('STOP! "%s" is listed as a restricted command (Potentially dangerous)')
+                    print('and requires explicit confirmation before running.')
                     print('Please double check all parameters, just to be sure...')
                     print('   >>>', cmd)
                     confirm = raw_input('Enter \'100%\' if completely sure: ')
@@ -133,8 +134,8 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                     else:
                         failures.setdefault(None, []).append(k)
                 if failures:
-                    print('\nSummary of failures:')
-                    for k, v in failures.items():
+                    print('\nSummary of return codes:')
+                    for k, v in [(0, completions)] + failures.items():
                         if len(v) > 5:
                             print(k, '\t- (%d hosts)' % len(v))
                         else:

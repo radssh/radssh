@@ -70,7 +70,7 @@ def star_help(cluster=None, logdir=None, cmdline=None, *args):
 
 def star_enable(cluster, logdir, cmdline, *args):
     '''Enable specific nodes by name, wildcard, network, or IP glob'''
-    if args:
+    if args and args[0] != '*':
         cluster.enable(args)
     else:
         cluster.enable()
