@@ -25,7 +25,9 @@ except ImportError:
 system_settings_file = '/etc/radssh_config'
 deprecated = {
     'verbose': 'Use loglevel=[CRITICAL|ERROR|WARNING|INFO|DEBUG] instead',
-    'paramiko_log_level': 'Use loglevel for controlling RadSSH and Paramiko logging'
+    'paramiko_log_level': 'Use loglevel for controlling RadSSH and Paramiko logging',
+    'hostkey.verify': 'Set StrictHostKeyChecking in standard SSH Config file (~/.ssh/config)',
+    'hostkey.known_hosts': 'Set UserKnownHostsFile in standard SSH Config file (~/.ssh/config)'
 }
 
 default_config = '''
@@ -92,16 +94,11 @@ plugins=
 # avoid loading some system (or user) plugins that normally load
 disable_plugins=
 
-# How to handle host key verification
-# Valid settings, in decreasing order of security/paranoia
-#     reject - (default) host key must be in ~/.ssh/known_hosts (and match)
-#     prompt - ask user to add missing host keys
-#     accept_new - missing host keys added without prompt
-#     ignore - No host key checking is done
-# In all cases, mismatched key info between known_hosts and current connection
-# will report the conflict, and drop the connection without sending any more data
-hostkey.verify=reject
-hostkey.known_hosts=~/.ssh/known_hosts
+# Options hostkey.verify and hostkey.known_hosts have been deprecated
+# in favor of using standard SSH Config settings StrictHostKeyChecking
+# and UserKnownHostsFile. RadSSH can use a different config settings
+# file by overriding the path to 'ssh_config' here:
+ssh_config=~/.ssh/config
 
 # Enable loading of user specific settings (and command line options)
 # Only if this is set.

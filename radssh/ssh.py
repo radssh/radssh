@@ -462,21 +462,24 @@ class Cluster(object):
         self.chunk_delay = 0
         self.output_mode = self.defaults['output_mode']
         self.sshconfig = paramiko.SSHConfig()
-        try:
-            with open(os.path.expanduser('~/.ssh/config')) as user_config:
-                self.sshconfig.parse(user_config)
-        except IOError as e:
-            logging.getLogger('radssh').warning('Unable to process user ssh_config file: %s', e)
-        if os.path.isdir('/etc/ssh'):
-            system_config = '/etc/ssh/ssh_config'
-        else:
-            # OSX location
-            system_config = '/etc/ssh_config'
-        try:
-            with open(system_config) as sysconfig:
-                self.sshconfig.parse(sysconfig)
-        except IOError as e:
-            logging.getLogger('radssh').warning('Unable to process system ssh_config file (%s): %s', system_config, e)
+        # Only load SSHConfig if path is set in RadSSH config
+        if defaults.get('ssh_config'):
+            logging.getLogger('radssh').warning('Loading SSH Config file: %s', defaults['ssh_config'])
+            try:
+                with open(os.path.expanduser(defaults['ssh_config'])) as user_config:
+                    self.sshconfig.parse(user_config)
+            except IOError as e:
+                logging.getLogger('radssh').warning('Unable to process user ssh_config file: %s', e)
+            if os.path.isdir('/etc/ssh'):
+                system_config = '/etc/ssh/ssh_config'
+            else:
+                # OSX location
+                system_config = '/etc/ssh_config'
+            try:
+                with open(system_config) as sysconfig:
+                    self.sshconfig.parse(sysconfig)
+            except IOError as e:
+                logging.getLogger('radssh').warning('Unable to process system ssh_config file (%s): %s', system_config, e)
 
         for label, conn in hostlist:
             if mux:
