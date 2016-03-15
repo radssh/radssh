@@ -50,6 +50,19 @@ user_abort = threading.Event()
 
 FILTER_TTY_ATTRS_RE = re.compile(b"\x1b\\[(\d)+(;(\d+))*m")
 
+# Map ssh_config LogLevels to Python logging module levels
+# This may need some future adjustment, as the labels don't quite line up
+sshconfig_loglevels = {
+	'QUIET': 0,
+	'FATAL': logging.CRITICAL,
+	'ERROR': logging.ERROR,
+	'INFO': logging.WARNING,
+	'VERBOSE': logging.INFO,
+	'DEBUG': logging.DEBUG,
+	'DEBUG1': logging.DEBUG,
+	'DEBUG2': logging.DEBUG,
+	'DEBUG3': logging.DEBUG
+}
 
 def filter_tty_attrs(line):
     '''Handle the attributes for colors, etc.'''
@@ -153,6 +166,7 @@ def connection_worker(host, conn, auth, sshconfig={}):
                 logging.getLogger('radssh').debug('LocalCommand "%s" completed with return code %d', cmd, p.wait())
         t = paramiko.Transport(s)
         t.setName(host)
+
         ciphers = sshconfig.get('ciphers')
         if ciphers:
             logging.getLogger('radssh').debug('Limit Ciphers to %s', ciphers)
@@ -197,7 +211,14 @@ def connection_worker(host, conn, auth, sshconfig={}):
         port = t.getpeername()[1]
         t.setName(host)
         hostname = host
-    t.set_log_channel('radssh.paramiko')
+    t.set_log_channel('radssh.paramiko.transport.%s' % host)
+    # Assign the ssh_config LogLevel to the paramiko.transport logger
+    loglevel = sshconfig.get('loglevel', 'INFO')
+    if loglevel in sshconfig_loglevels:
+        logging.getLogger(t.get_log_channel()).setLevel(sshconfig_loglevels[loglevel])
+    else:
+		logging.getLogger('radssh').warning('Unknown LogLevel (%s) for %s', loglevel, host)
+
     try:
         if check_host_key:
             verify_host = sshconfig.get('hostkeyalias', str(hostname))
