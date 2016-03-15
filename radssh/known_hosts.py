@@ -121,9 +121,11 @@ def verify_transport_key(t, hostname, port, sshconfig):
             if x.key.get_name() == hostkey.get_name():
                 if x.key.get_fingerprint() == hostkey.get_fingerprint():
                     break
-                logging.getLogger('radssh.keys').warning('Host %s (IP %s) failed SSH key validation - conflicting entry [%s:%d]' %
+                logging.getLogger('radssh.keys').warning(
+                    'Host %s (IP %s) failed SSH key validation - conflicting entry [%s:%d]' %
                     (hostname, verify_ip, x.filename, x.lineno))
-                raise Exception('Host %s (IP %s) failed SSH key validation - conflicting entry [%s:%d]' %
+                raise Exception(
+                    'Host %s (IP %s) failed SSH key validation - conflicting entry [%s:%d]' %
                     (hostname, verify_ip, x.filename, x.lineno))
         else:
             # No match found for IP

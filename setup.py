@@ -125,7 +125,7 @@ The RadSSH shell behaves similar to a normal ssh command line client, but instea
 
 RadSSH includes a loadable plugin facility to extend the functionality of the shell with basic Python scripting, as well as a high level API that can be used to build stand alone applications for dedicated SSH control processing in a parallel environment.
 
-Interested in more? 
+Interested in more?
  * Download at https://pypi.python.org/pypi/radssh
  * Read the Docs at http://radssh.readthedocs.org/en/latest/index.html
  * Participate at https://github.com/radssh/radssh

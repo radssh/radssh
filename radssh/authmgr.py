@@ -330,7 +330,7 @@ class AuthManager(object):
                         if auth_success:
                             break
             elif (auth_type == 'password' and sshconfig.get('passwordauthentication', 'yes') == 'yes') or \
-                (auth_type == 'keyboard-interactive' and sshconfig.get('kbdinteractiveauthentication', 'yes') == 'yes'):
+                    (auth_type == 'keyboard-interactive' and sshconfig.get('kbdinteractiveauthentication', 'yes') == 'yes'):
                 # Paramiko will fake keyboard-interactive as password authentication
                 auth_success = self.try_auth(T, self.passwords, True, auth_user, allow_prompt=allow_prompt)
                 if auth_success:

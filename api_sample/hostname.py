@@ -5,8 +5,8 @@ NetTest Module
 Use RadSSH API to connect to several hosts, run 'hostname',
 and report on any issues via syslog and stdout.
 
-The basics involve building a list of hosts to connect to, and 
-an AuthManager to handle the user login (either by password or 
+The basics involve building a list of hosts to connect to, and
+an AuthManager to handle the user login (either by password or
 by SSH key). These are used to build a RadSSH Cluster object
 that can be used to inspect the status of the connections, run
 arbitrary command line(s), and programmatic access to the command

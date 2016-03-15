@@ -26,6 +26,7 @@ import netaddr
 import re
 import getpass
 import logging
+import hashlib
 import shlex
 import subprocess
 try:
@@ -39,7 +40,6 @@ from .authmgr import AuthManager
 from .streambuffer import StreamBuffer
 from .dispatcher import Dispatcher, UnfinishedJobs
 from .console import RadSSHConsole
-#from .hostkey import HostKeyVerifier
 from . import known_hosts
 from . import config
 from .keepalive import KeepAlive, ServerNotResponding
@@ -53,16 +53,17 @@ FILTER_TTY_ATTRS_RE = re.compile(b"\x1b\\[(\d)+(;(\d+))*m")
 # Map ssh_config LogLevels to Python logging module levels
 # This may need some future adjustment, as the labels don't quite line up
 sshconfig_loglevels = {
-	'QUIET': 0,
-	'FATAL': logging.CRITICAL,
-	'ERROR': logging.ERROR,
-	'INFO': logging.WARNING,
-	'VERBOSE': logging.INFO,
-	'DEBUG': logging.DEBUG,
-	'DEBUG1': logging.DEBUG,
-	'DEBUG2': logging.DEBUG,
-	'DEBUG3': logging.DEBUG
+    'QUIET': 0,
+    'FATAL': logging.CRITICAL,
+    'ERROR': logging.ERROR,
+    'INFO': logging.WARNING,
+    'VERBOSE': logging.INFO,
+    'DEBUG': logging.DEBUG,
+    'DEBUG1': logging.DEBUG,
+    'DEBUG2': logging.DEBUG,
+    'DEBUG3': logging.DEBUG
 }
+
 
 def filter_tty_attrs(line):
     '''Handle the attributes for colors, etc.'''
@@ -136,6 +137,41 @@ class Chunker(object):
         yield self.data[-1]
 
 
+def run_local_command(original_name, remote_hostname, port, remote_username, sshconfig):
+    '''
+    Handle preparing command line to run on connecting to remote host. This
+    includes doing possible substitutions that are not done by Paramiko's
+    ssh_config, as they involve connection specific values that are not known
+    at the time of original lookup.
+    '''
+    if sshconfig.get('permitlocalcommand', 'no') != 'yes':
+        return
+    cmd = sshconfig.get('localcommand')
+    if not cmd:
+        return
+    if '%' in cmd:
+        translations = {
+            '%d': os.path.expanduser('~'),
+            '%h': remote_hostname,
+            '%l': socket.gethostname(),
+            '%n': original_name,
+            '%p': str(port),
+            '%r': sshconfig.get('user', remote_username),
+            '%u': os.getlogin(),
+            '%C': hashlib.sha1(
+                socket.gethostname() +
+                remote_hostname +
+                str(port) +
+                sshconfig.get('user', remote_username)).hexdigest()
+        }
+        for token, subst in translations.items():
+            cmd = cmd.replace(token, subst)
+    logging.getLogger('radssh').info('Executing LocalCommand "%s" for connection to %s', cmd, original_name)
+    # Self-inflicted harm if this never returns...
+    p = subprocess.Popen(shlex.split(cmd))
+    logging.getLogger('radssh').debug('LocalCommand "%s" completed with return code %d', cmd, p.wait())
+
+
 def connection_worker(host, conn, auth, sshconfig={}):
     check_host_key = True
     # host is the label of the host, conn is the "real" name/ip to connect
@@ -157,13 +193,7 @@ def connection_worker(host, conn, auth, sshconfig={}):
         else:
             # hostname is a potentially fake label, use conn as actual connection destination
             s = socket.create_connection((hostname, int(port)), timeout=sshconfig.get('connecttimeout'))
-        if sshconfig.get('permitlocalcommand', 'no') == 'yes':
-            cmd = sshconfig.get('localcommand')
-            if cmd:
-                logging.getLogger('radssh').info('Executing LocalCommand "%s" for connection to %s', cmd, hostname)
-                # Self-inflicted harm if this never returns...
-                p = subprocess.Popen(shlex.split(cmd))
-                logging.getLogger('radssh').debug('LocalCommand "%s" completed with return code %d', cmd, p.wait())
+        run_local_command(conn, hostname, port, auth.default_user, sshconfig)
         t = paramiko.Transport(s)
         t.setName(host)
 
@@ -217,7 +247,7 @@ def connection_worker(host, conn, auth, sshconfig={}):
     if loglevel in sshconfig_loglevels:
         logging.getLogger(t.get_log_channel()).setLevel(sshconfig_loglevels[loglevel])
     else:
-		logging.getLogger('radssh').warning('Unknown LogLevel (%s) for %s', loglevel, host)
+        logging.getLogger('radssh').warning('Unknown LogLevel (%s) for %s', loglevel, host)
 
     try:
         if check_host_key:
@@ -236,7 +266,6 @@ def connection_worker(host, conn, auth, sshconfig={}):
                 t.start_client()
             # Do the key verification based on sshconfig settings
             known_hosts.verify_transport_key(t, verify_host, int(port), sshconfig)
-
 
     except Exception as e:
         logging.getLogger('radssh').error('Unable to verify host key for %s\n%s', verify_host, repr(e))
@@ -432,8 +461,6 @@ class Cluster(object):
         self.chunk_size = None
         self.chunk_delay = 0
         self.output_mode = self.defaults['output_mode']
-        #self.hkv = HostKeyVerifier(self.defaults['hostkey.verify'],
-                                   #self.defaults['hostkey.known_hosts'])
         self.sshconfig = paramiko.SSHConfig()
         try:
             with open(os.path.expanduser('~/.ssh/config')) as user_config:
