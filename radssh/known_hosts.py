@@ -141,12 +141,12 @@ def verify_transport_key(t, hostname, port, sshconfig):
         if int(port) == 22:
             entries.append(hostname)
         else:
-            entries.append('[%s:%s]' % (hostname, port))
+            entries.append('[%s]:%s' % (hostname, port))
     if add_ip_entry:
         if int(port) == 22:
             entries.append(verify_ip)
         else:
-            entries.append('[%s:%s]' % (verify_ip, port))
+            entries.append('[%s]:%s' % (verify_ip, port))
     if sshconfig.get('stricthostkeychecking', 'ask') == 'no':
         add_key = user_known_hosts.add
     else:
@@ -213,7 +213,7 @@ class KnownHosts (object):
                                (hostname, keytype, keyval))
             if self._filename:
                 self.save()
-        logging.getLogger('radssh.keys').info('Added new known_hosts entry for %s [%s] to %s' % (hostname, printable_fingerprint(key), self._filename))
+        logging.getLogger('radssh.keys').info('Added new known_hosts entry for %s (%s) to %s' % (hostname, printable_fingerprint(key), self._filename))
         return HostKeyEntry([hostname], key, lineno=lineno)
 
     def load(self, filename):
