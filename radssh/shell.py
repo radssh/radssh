@@ -302,7 +302,7 @@ def radssh_shell_main():
         logging.basicConfig(format=logformat)
         pass
     try:
-        logging.getLogger().setLevel(getattr(logging, defaults['loglevel']))
+        logging.getLogger().setLevel(getattr(logging, defaults['loglevel'].upper()))
     except AttributeError:
         raise RuntimeError('RadSSH setting "loglevel" should be set to one of [CRITICAL,ERROR,WARNING,INFO,DEBUG] instead of "%s"', defaults['loglevel'])
     logger = logging.getLogger('radssh')

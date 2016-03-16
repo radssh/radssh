@@ -244,8 +244,8 @@ def connection_worker(host, conn, auth, sshconfig={}):
     t.set_log_channel('radssh.paramiko.transport.%s' % host)
     # Assign the ssh_config LogLevel to the paramiko.transport logger
     loglevel = sshconfig.get('loglevel', 'INFO')
-    if loglevel in sshconfig_loglevels:
-        logging.getLogger(t.get_log_channel()).setLevel(sshconfig_loglevels[loglevel])
+    if loglevel.upper() in sshconfig_loglevels:
+        logging.getLogger(t.get_log_channel()).setLevel(sshconfig_loglevels[loglevel.upper()])
     else:
         logging.getLogger('radssh').warning('Unknown LogLevel (%s) for %s', loglevel, host)
 
