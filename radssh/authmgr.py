@@ -172,7 +172,7 @@ class AuthManager(object):
     def __init__(self, default_user, auth_file='./.radssh_authfile', include_agent=False, include_userkeys=False, default_password=None, try_auth_none=True):
         self.keys = []
         self.passwords = []
-        self.default_password = None
+        self.default_passwords = {}
         self.try_auth_none = try_auth_none
         self.logger = logging.getLogger('radssh.auth')
         self.import_lock = threading.Lock()
@@ -192,10 +192,6 @@ class AuthManager(object):
 
         if auth_file:
             self.read_auth_file(auth_file)
-        # If we got nothing, prompt the user
-        if not (self.agent_connection and self.agent_connection.get_keys()) \
-                and not self.passwords and not self.keys and self.default_password is None:
-            self.interactive_password()
 
     def read_auth_file(self, auth_file):
         ''' Read in settings from an authfile. See docs for example format.'''
@@ -249,7 +245,7 @@ class AuthManager(object):
         if filter:
             self.passwords.append((filter, password))
         else:
-            self.default_password = password
+            self.default_passwords[None] = password
 
     def add_key(self, key, filter=None):
         '''Append to a list of explicit keys to try, separate from any agent keys'''
@@ -335,9 +331,27 @@ class AuthManager(object):
                 auth_success = self.try_auth(T, self.passwords, True, auth_user, allow_prompt=allow_prompt)
                 if auth_success:
                     break
-                # Try default password if it is set
-                if self.default_password:
-                    auth_success = self.try_auth(T, [(None, self.default_password)], True, auth_user)
+                # Try "universal" default password if it is set
+                if self.default_passwords.get(None):
+                    auth_success = self.try_auth(T, [(None, self.default_passwords[None])], True, auth_user)
+                retries = int(sshconfig.get('numberofpasswordprompts', 3))
+                if sshconfig.get('batchmode', 'no') == 'yes':
+                    retries = 0
+                with self.import_lock:
+                    password = self.default_passwords.get(auth_user)
+                    while not auth_success and retries > 0:
+                        if not password:
+                            password = PlainText(getpass.getpass(
+                                'Please enter a password for (%s@%s) :' % (auth_user, T.getName())))
+                            retries -= 1
+                        auth_success = self.try_auth(T, [(None, password)], True, auth_user)
+                        if auth_success:
+                            # If the password worked, save it
+                            self.default_passwords[auth_user] = password
+                        else:
+                            # Wipe password and prompt again, if able
+                            print('Password incorrect')
+                            password = None    
 
         # Part 2 of save_banner workaround - shove it into the current auth_handler
         if T.save_banner:
@@ -345,7 +359,7 @@ class AuthManager(object):
         return auth_success
 
     def interactive_password(self):
-        self.default_password = PlainText(getpass.getpass(
+        self.default_passwords[None] = PlainText(getpass.getpass(
             'Please enter a password for (%s) :' % self.default_user))
 
     def __str__(self):
@@ -465,5 +479,5 @@ if __name__ == '__main__':
                 print('\t', repr(password), 'for hosts matching:', filter)
         else:
             print('No explicit passwords loaded')
-        if sample.default_password:
-            print('Authfile includes a default password [%s]' % repr(sample.default_password))
+        if sample.default_passwords:
+            print('Authfile includes a default password [%s]' % repr(sample.default_passwords))
