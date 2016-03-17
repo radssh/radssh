@@ -15,6 +15,7 @@
 
 from __future__ import print_function  # Requires Python 2.6 or higher
 
+import paramiko
 import radssh.ssh as ssh
 
 
@@ -33,10 +34,14 @@ def star_add(cluster, logdir, cmd, *args):
 
 def star_drop(cluster, logdir, cmd, *args):
     '''Drop node connections from the cluster - If hosts not listed, use the currently disabled hosts'''
-    if not args:
-        hosts = list(cluster.disabled)
-    else:
+    if args:
         hosts = args
+    else:
+        # If user didn't specify, implied drop of unauthenticated or disabled connections
+        hosts = set([k for k, v in cluster.connections.items()
+                 if not isinstance(v, paramiko.Transport) or not v.is_authenticated()])
+        hosts.update(cluster.disabled)
+        print('Dropping %d disabled/unauthenticated connections' % len(hosts))
 
     for host in hosts:
         host_key = cluster.locate(host)
@@ -44,8 +49,9 @@ def star_drop(cluster, logdir, cmd, *args):
             print('Disconnecting from %r' % host_key)
             try:
                 t = cluster.connections[host_key]
-                t.close()
                 cluster.disabled.discard(host_key)
+                if hasattr(t, 'close'):
+                    t.close()
             except Exception as e:
                 print(repr(e))
             cluster.connections.pop(host_key)
