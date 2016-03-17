@@ -192,7 +192,14 @@ def connection_worker(host, conn, auth, sshconfig={}):
             s = paramiko.ProxyCommand(proxy)
         else:
             # hostname is a potentially fake label, use conn as actual connection destination
-            s = socket.create_connection((hostname, int(port)), timeout=float(sshconfig.get('connecttimeout')))
+            try:
+                timeout = sshconfig.get('connecttimeout')
+                if timeout:
+                    timeout = float(timeout)
+            except Exception as e:
+                logging.getLogger('radssh').error('Invalid ConnectTimeout value "%s" ignored: %s', timeout, e)
+                timeout = None
+            s = socket.create_connection((hostname, int(port)), timeout=timeout)
         run_local_command(conn, hostname, port, auth.default_user, sshconfig)
         t = paramiko.Transport(s)
         t.setName(host)
