@@ -192,7 +192,7 @@ def connection_worker(host, conn, auth, sshconfig={}):
             s = paramiko.ProxyCommand(proxy)
         else:
             # hostname is a potentially fake label, use conn as actual connection destination
-            s = socket.create_connection((hostname, int(port)), timeout=sshconfig.get('connecttimeout'))
+            s = socket.create_connection((hostname, int(port)), timeout=float(sshconfig.get('connecttimeout')))
         run_local_command(conn, hostname, port, auth.default_user, sshconfig)
         t = paramiko.Transport(s)
         t.setName(host)
