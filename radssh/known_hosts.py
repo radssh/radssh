@@ -253,7 +253,7 @@ class KnownHosts (object):
                             else:
                                 self._index[h].append(offset + lineno)
                 except (UnreadableKey, TypeError) as e:
-                    logging.getLogger('radssh.keys').warning(
+                    logging.getLogger('radssh.keys').error(
                         'Skipping unloadable key line (%s:%d): %s' % (filename, lineno + 1, line))
                     pass
 
@@ -387,26 +387,28 @@ class HostKeyEntry:
         key = key.encode('ascii')
         # SSH-2 Key format consists of 2 (text) fields
         #     keytype, base64_blob
-        if keytype == 'ssh-rsa':
-            key = paramiko.RSAKey(data=base64.b64decode(key))
-        elif keytype == 'ssh-dss':
-            key = paramiko.DSSKey(data=base64.b64decode(key))
-        elif keytype == 'ecdsa-sha2-nistp256':
-            key = paramiko.ECDSAKey(data=base64.b64decode(key), validate_point=False)
-        elif len(fields) > 3:
-            # SSH-1 Key format consists of 3 integer fields
-            #     bits, exponent, modulus (RSA Only)
-            try:
-                bits = int(fields[1])
-                exponent = int(fields[2])
-                modulus = long(fields[3])
-                key = paramiko.RSAKey(vals=(exponent, modulus))
-            except ValueError:
+        try:
+            if keytype == 'ssh-rsa':
+                key = paramiko.RSAKey(data=base64.b64decode(key))
+            elif keytype == 'ssh-dss':
+                key = paramiko.DSSKey(data=base64.b64decode(key))
+            elif keytype == 'ecdsa-sha2-nistp256':
+                key = paramiko.ECDSAKey(data=base64.b64decode(key), validate_point=False)
+            elif len(fields) > 3:
+                # SSH-1 Key format consists of 3 integer fields
+                #     bits, exponent, modulus (RSA Only)
+                try:
+                    bits = int(fields[1])
+                    exponent = int(fields[2])
+                    modulus = long(fields[3])
+                    key = paramiko.RSAKey(vals=(exponent, modulus))
+                except ValueError:
+                    raise UnreadableKey('Invalid known_hosts line', line, lineno, filename)
+            else:
                 raise UnreadableKey('Invalid known_hosts line', line, lineno, filename)
-        else:
-            raise UnreadableKey('Invalid known_hosts line', line, lineno, filename)
-
-        return cls(names, key, marker, lineno, filename)
+            return cls(names, key, marker, lineno, filename)
+        except Exception as e:
+            raise UnreadableKey('Invalid known_hosts line (%s)' % e, line, lineno, filename)
 
     def negated(self, hostname):
         '''
