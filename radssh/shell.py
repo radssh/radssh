@@ -99,7 +99,7 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                     print('You really don\'t want to run %s without a TTY, do you?' % initial_command)
                     continue
                 if initial_command in defaults['commands.restricted'].split(','):
-                    print('STOP! "%s" is listed as a restricted command (Potentially dangerous)')
+                    print('STOP! "%s" is listed as a restricted command (Potentially dangerous)' % initial_command)
                     print('and requires explicit confirmation before running.')
                     print('Please double check all parameters, just to be sure...')
                     print('   >>>', cmd)
