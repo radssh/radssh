@@ -34,7 +34,7 @@ def posix_shell(chan, encoding='UTF-8'):
                     if len(x) == 0:
                         sys.stdout.write('\r\n*** EOF ***\r\n')
                         break
-                    sys.stdout.write(x.decode(encoding))
+                    print(x.decode(encoding), end='')
                     sys.stdout.flush()
                 except socket.timeout:
                     pass
