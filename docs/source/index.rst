@@ -5,8 +5,8 @@
 
 Welcome to RadSSH!
 ==================
- 
-RadSSH is a Python package for Python 2.6+/3.3+. It builds upon the Paramiko package, and PyCrypto, and provides a simple, yet powerful and extensible user "shell" environment, along with some other minor utilities, and a higher level core API for Python programmers.
+
+RadSSH is a Python package for Python 2.6+/3.3+. It builds upon the Paramiko package, and provides a simple, yet powerful and extensible user "shell" environment, along with some other minor utilities, and a higher level core API for Python programmers.
 
 RadSSH began as a single purpose tool to simplify the operational pattern of constructing ad-hoc 'for' loops in shell to invoke the command line ssh client in order to invoke a single command in sequence across dozens or hundreds of server nodes. Since its original implementation, that small utility has evolved into what is now RadSSH.
 

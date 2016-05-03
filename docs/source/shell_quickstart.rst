@@ -3,7 +3,7 @@ RadSSH Shell - Your First Session
 
 Start here if you want to jump right in!
 
-To test if RadSSH is properly installed with all prerequisites, you can run: ``python -m radssh`` (If you get an error stating that radssh is a package and can not be directly executed, your Python is likely version 2.6, and you should run ``python -m radssh.__main__`` instead). You should see a short output summary of RadSSH, along with version information on RadSSH itself, and the Paramiko and PyCrypto modules that it depends on. If you get errors, there is a problem with the installation, and you should resolve it : see :doc:`installation`.
+To test if RadSSH is properly installed with all prerequisites, you can run: ``python -m radssh`` (If you get an error stating that radssh is a package and can not be directly executed, your Python is likely version 2.6, and you should run ``python -m radssh.__main__`` instead). You should see a short output summary of RadSSH, along with version information on RadSSH itself, and the Paramiko and other modules that it depends on. If you get errors, there is a problem with the installation, and you should resolve it : see :doc:`installation`.
 
 If the main module summary is functioning, you should be ready to go!
 
@@ -21,7 +21,7 @@ Start the session by running ``python -m radssh.shell huey dewey louie scrooge``
     Connecting to 4 hosts...
     X...
     RadSSH $
-    
+
 The progress of connections is indicated by a series of 1-character codes:
  - **.**    Connection has been established with successful user authentication
  - **O**    Connection was established, but user authentication failed
@@ -43,7 +43,7 @@ The connection progress line of dots, with maybe a few X's and O's, is intention
         Output Byte Limit: Unlimited
         Output Byte Limit: Unlimited
     Cluster output mode: stream
-    RadSSH $ 
+    RadSSH $
 
 The names display along with the elapsed time taken to connect and authenticate, as well as the authenticated username and remote IP address of the socket connection. Any problem connections will appear grouped at the end of the list, and include information about what specifically prevented the connection or authentication. In our example, RadSSH failed to establish a connection to ``scrooge`` because it is not a known host. RadSSH does not treat this as a critical error; commands will not be run on ``scrooge`` unless it is later reconnected and authenticated. The list entry for ``scrooge`` is kept as a dormant connection.
 
@@ -58,7 +58,7 @@ You can enter shell command line(s) at the **RadSSH $** prompt. Press [Enter] to
     [louie] 13:51  up 512 days,  2:07, 0 users, load averages: 2.15 2.10 2.09
     [huey]  13:36:22 up 29 days,  1:41,  8 users,  load average: 0.00, 0.00, 0.00
     [dewey]  13:36:23 up 29 days,  2:42,  1 user,  load average: 0.00, 0.01, 0.05
-    
+
     Summary of failures:
     None    - ['scrooge']
     Average completion time for 3 hosts: 0.050224s
@@ -81,7 +81,7 @@ You can enter shell command line(s) at the **RadSSH $** prompt. Press [Enter] to
     Summary of failures:
     None    - ['scrooge']
     Average completion time for 3 hosts: 0.046714s
-    RadSSH $ 
+    RadSSH $
 
 Each command resulted in one (or two) lines of output from each host. On terminals with ANSI code support, they should also be presented with color coding, adding distinction between lines of output from different hosts. Because the commands were run on the remote hosts in parallel, the ordering of the output is not guaranteed to be printed in a predetermined order; results are printed (by default) in the order that they arrive on the network. In addition, at the conclusion of the output section is a summary of failures (if any) and a timing summary for the execution of the command line across all of the remote connections.
 
@@ -98,4 +98,3 @@ A Bonus Directory (Default Logging)
 -----------------------------------
 
 When RadSSH exits, and you return back you your normal shell prompt, do a directory listing with ``ls -ltr``, and you should see a newly created directory *session_YYYYMMDD_hhmmss* with recent Year+Month+Day and Hour+Minute+Seconds. RadSSH, by default, will log session commands, and host output (both stdout and stderr, if applicable) into individual files in this session directory.
-

@@ -10,7 +10,7 @@
 #
 
 '''
-PKCS - Encryption/Decryption helper derived from PyCrypto
+PKCS - Encryption/Decryption helper derived from cryptography (or PyCrypto)
 
 Uses a key (RSA) to encrypt and/or decrypt a short plaintext message, like a password.
 
@@ -24,17 +24,62 @@ import base64
 import getpass
 import warnings
 
-import Crypto.PublicKey.RSA as RSA
 
-# Earlier versions of PyCrypto do not have PKCS1_OAEP
-# Handle this gracefully by making the class still able to be instantiated
-# but attempts to encrypt/decrypt raising exceptions instead of import or
-# class constructor.
 try:
-    from Crypto.Cipher import PKCS1_OAEP
+    import cryptography
+    PKCS1_OAEP = cryptography
+    import cryptography.hazmat.backends
+    import cryptography.hazmat.primitives
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.serialization import load_ssh_public_key, load_pem_private_key
+    from cryptography.hazmat.primitives.asymmetric import padding
+
+    # Replace PyCrypto OAEP functionality with crytpography
+    class PKCS1_OAEP(object):
+        __name__ = 'cryptography'
+        def __init__(self, setup):
+            print('Cryptography.io PKCS created')
+            self.backend = cryptography.hazmat.backends.default_backend()
+            self.oaep = padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA1()),
+                algorithm=hashes.SHA1(),
+                label=None
+            )
+            if setup.keydata.startswith('ssh-rsa'):
+                self.private_key = None
+                self.public_key = load_ssh_public_key(setup.keydata, self.backend)
+            else:
+                try:
+                    self.private_key = load_pem_private_key(setup.keydata, password=setup.default_passphrase, backend=self.backend)
+                except TypeError:
+                    if setup.default_passphrase:
+                        # No need to interactively prompt - we failed
+                        raise
+                    passphrase = getpass.getpass('Enter passphrase for [%s]: ' % setup.keyfile)
+                    self.private_key = load_pem_private_key(setup.keydata, password=passphrase, backend=self.backend)
+                self.public_key = self.private_key.public_key()
+
+        def encrypt(self, msg):
+            return self.public_key.encrypt(msg, self.oaep)
+
+        def decrypt(self, data):
+            if not self.private_key:
+                raise RuntimeError('Unable to decrypt - No private key')
+            return self.private_key.decrypt(data, self.oaep)
+
+
 except ImportError:
-    warnings.warn(Warning('PyCrypto module does not support PKCS1_OAEP. Encrypt/Decrypt operations disabled'))
-    PKCS1_OAEP = None
+    # Earlier versions of PyCrypto do not have PKCS1_OAEP
+    # Handle this gracefully by making the class still able to be instantiated
+    # but attempts to encrypt/decrypt raising exceptions instead of import or
+    # class constructor.
+    try:
+        import Crypto.PublicKey.RSA as RSA
+        from Crypto.Cipher import PKCS1_OAEP
+        warnings.warn(Warning('PyCrypto module is no longer actively maintained - consider installing cryptography'))
+    except ImportError:
+        warnings.warn(Warning('PyCrypto module does not support PKCS1_OAEP. Encrypt/Decrypt operations disabled'))
+        PKCS1_OAEP = None
 
 
 class PKCSError(Exception):
@@ -78,20 +123,29 @@ class PKCS_OAEP(object):
             raise PKCSError('PKCS1_OAEP cipher unavailable in this version of PyCrypto')
         if self.cipher_object:
             return self.cipher_object
-        if not self.rsakey:
-            # Construct the key object from the source - may need to prompt for passphrase
-            try:
+        if PKCS1_OAEP.__name__ == 'Crypto.Cipher.PKCS1_OAEP':
+            # PyCrypto way - instantiate a PCKS1_OAEP object with the RSA key
+            # (public or private) and the class provides encrypt/decrypt methods
+            if not self.rsakey:
+                # Construct the key object from the source - may need to prompt for passphrase
                 try:
-                    self.rsakey = RSA.importKey(self.keydata, self.default_passphrase)
-                except ValueError:
-                    if self.default_passphrase:
-                        # No need to interactively prompt - we failed
-                        raise
-                    passphrase = getpass.getpass('Enter passphrase for [%s]: ' % self.keyfile)
-                    self.rsakey = RSA.importKey(self.keydata, passphrase)
-            except Exception as e:
-                raise PKCSError('Unable to load key - %s' % str(e))
-        self.cipher_object = PKCS1_OAEP.new(self.rsakey)
+                    try:
+                        self.rsakey = RSA.importKey(self.keydata, self.default_passphrase)
+                    except ValueError:
+                        if self.default_passphrase:
+                            # No need to interactively prompt - we failed
+                            raise
+                        passphrase = getpass.getpass('Enter passphrase for [%s]: ' % self.keyfile)
+                        self.rsakey = RSA.importKey(self.keydata, passphrase)
+                except Exception as e:
+                    raise PKCSError('Unable to load key - %s' % str(e))
+            self.cipher_object = PKCS1_OAEP.new(self.rsakey)
+        else:
+            # cryptography.io way - RSA private key object provides decrypt,
+            # public key object provides encrypt, but each needs a padding
+            # parameter of OAEP that needs to be constructed.
+            self.cipher_object = PKCS1_OAEP(self)
+
         return self.cipher_object
 
     def encrypt_binary(self, blob):
