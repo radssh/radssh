@@ -45,7 +45,7 @@ try:
                 algorithm=hashes.SHA1(),
                 label=None
             )
-            if setup.keydata.startswith('ssh-rsa'):
+            if setup.keydata.startswith(b'ssh-rsa'):
                 self.private_key = None
                 self.public_key = load_ssh_public_key(setup.keydata, self.backend)
             else:
@@ -116,18 +116,19 @@ class PKCS_OAEP(object):
         self.keyfile = os.path.expanduser(keyfile)
         self.default_passphrase = default_passphrase
         try:
-            with open(self.keyfile, 'r') as f:
+            with open(self.keyfile, 'rb') as f:
                 self.keydata = f.read()
             # Peek to see if it looks like a pubkey or private key
-            if self.keydata.startswith('ssh-rsa '):
+            if self.keydata.startswith(b'ssh-rsa '):
                 self.cipher_object = PKCS1_OAEP(self)
-            elif 'BEGIN RSA PRIVATE KEY' in self.keydata:
+            elif b'BEGIN RSA PRIVATE KEY' in self.keydata:
                 # Defer loading the key, in case a passphrase is required
                 # Handle that when/if the key is needed to instantiate the cipher
                 self.cipher_object = None
             else:
                 raise PKCSError('Key format not recognized', keyfile)
         except IOError:
+            self.cipher_object = None
             self.keydata = None
         self.unsupported = not PKCS1_OAEP
 
@@ -143,6 +144,8 @@ class PKCS_OAEP(object):
             raise PKCSError('PKCS1_OAEP cipher unavailable in this version of PyCrypto')
         if self.cipher_object:
             return self.cipher_object
+        if not self.keydata:
+            raise PKCSError('No RSA Key available: %s' % self.keyfile)
         self.cipher_object = PKCS1_OAEP(self)
 
         return self.cipher_object
