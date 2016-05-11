@@ -39,7 +39,7 @@ def star_drop(cluster, logdir, cmd, *args):
     else:
         # If user didn't specify, implied drop of unauthenticated or disabled connections
         hosts = set([k for k, v in cluster.connections.items()
-                 if not isinstance(v, paramiko.Transport) or not v.is_authenticated()])
+                     if not isinstance(v, paramiko.Transport) or not v.is_authenticated()])
         hosts.update(cluster.disabled)
         print('Dropping %d disabled/unauthenticated connections' % len(hosts))
 

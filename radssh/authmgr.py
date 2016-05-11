@@ -287,7 +287,8 @@ class AuthManager(object):
                 # If by some miracle or misconfiguration, auth_none succeeds...
                 return True
         except paramiko.BadAuthenticationType as e:
-            T.save_banner = T.auth_handler.get_banner()
+            if hasattr(T.auth_handler, 'banner'):
+                T.save_banner = T.auth_handler.banner
             server_authtypes_supported = e.allowed_types
 
         # Go by ordering specified in ssh_config, only trying the ones accepted by the remote host

@@ -80,6 +80,7 @@ except ImportError:
         # Provide a wrapper around the base PyCrypto PKCS1_OAEP class
         # PyCrypto way - instantiate a PCKS1_OAEP object with the RSA key
         # (public or private) and the class provides encrypt/decrypt methods
+
         def PKCS1_OAEP(setup):
             # Construct the key object from the source - may need to prompt for passphrase
             try:
