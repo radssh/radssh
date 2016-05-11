@@ -19,6 +19,7 @@ to be a pair (label, stderr), where label is typically a hostname
 and stderr is a boolean indicating if the message content came from
 stderr (highlight) or not.
 '''
+from __future__ import print_function
 import sys
 import threading
 from collections import deque, defaultdict
@@ -83,7 +84,7 @@ class RadSSHConsole(object):
         '''Set console (titlebar) status message'''
         if not self.quietmode:
             # Jam into window title bar
-            sys.stdout.write("\x1b]2;%s\x07" % message)
+            print("\x1b]2;%s\x07" % message, end='')
             sys.stdout.flush()
 
     def join(self, clear_history=False):
@@ -98,7 +99,7 @@ class RadSSHConsole(object):
     def progress(self, s):
         '''For progress-bar like output; no newlines'''
         if not self.quietmode:
-            sys.stdout.write(s)
+            print(s, end='')
             sys.stdout.flush()
 
     def replay_recent(self, label):
@@ -107,7 +108,7 @@ class RadSSHConsole(object):
             return
         self.join()
         for line in self.recent_history.get(str(label), []):
-            sys.stdout.write('STALLED: ' + line)
+            print('STALLED: ' + line, end='')
 
     def console_thread(self):
         '''Background-able thread to pull from outputQ and format and print to screen'''
@@ -117,13 +118,13 @@ class RadSSHConsole(object):
                 if not self.quietmode:
                     # Tag is tuple of (label, stderr_flag)
                     for line in self.formatter(tag, text):
-                        sys.stdout.write(line)
+                        print(line, end='')
                         if self.retain_recent:
                             self.recent_history[str(tag[0])].append(line)
                     sys.stdout.flush()
             except Exception as e:
-                sys.stdout.write('Console Thread Exception: %s\n' % str(e))
-                sys.stdout.write('(%s): %s\n' % (tag, text))
+                print('Console Thread Exception: %s\n' % str(e))
+                print('(%s): %s\n' % (tag, text))
             finally:
                 self.q.task_done()
 
@@ -134,7 +135,7 @@ if __name__ == '__main__':
     c.status('Title Bar Set')
     for x in range(20):
         c.q.put((('Loop', False), str(x)))
-    sys.stdout.write('Loop complete\n')
+    print('Loop complete\n', end='')
     c.join()
-    sys.stdout.write('Console output complete\n')
+    print('Console output complete')
     sys.stdout.flush()
