@@ -1,5 +1,5 @@
 '''
-PKCS - Encryption/Decryption helper derived from PyCrypto
+PKCS - Encryption/Decryption helper derived from PyCrypto or cryptography
 
 Uses a key (RSA) to encrypt and/or decrypt a short plaintext message, like a password.
 

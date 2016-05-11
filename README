@@ -8,7 +8,7 @@
 # included with the distribution as file LICENSE.txt
 #
 
-Requires Python 2.6+ (maybe 2.5+), so CentOS 5 is not supported for running the utility, but is for connecting as destination hosts. You will also need to have Paramiko and netaddr modules available (CentOS6 RPM names python-paramiko-1.7.5-2.1.el6.noarch &  python-netaddr-0.7.5-4.el6.noarch) Paramiko should in turn have a dependency on PyCrypto. 
+Requires Python 2.6+, so CentOS 5 is not supported for running the utility, but is for connecting as destination hosts. You will also need to have Paramiko and netaddr modules available (CentOS6 RPM names python-paramiko-1.7.5-2.1.el6.noarch &  python-netaddr-0.7.5-4.el6.noarch) Paramiko should in turn have a dependency on either PyCrypto (for Paramiko 1.X) or cryptography (for Paramiko 2 or later). 
 
 Since I restructured it as a source distributable module, you should also get python-setuptools-0.6.10-3.el6.noarch if you don't already have it. Installation as a system level module is done with:
 cd radssh
@@ -31,7 +31,7 @@ Basic caveats:
 •	Command line history works, and is saved across sessions, much like bash command line history. Up/down arrow, and Ctrl-R search.
 •	Command line completion does NOT work (yet?)
 •	You don't have a TTY on the remote systems. Running a command that requires interactive keyboard input will not behave well. The shell does attempt to recognize many "problem" commands like vi, and block them. It will also require confirmation for another subset of potentially dangerous commands (especially dangerous if the user forgets that they may be connected to hundreds of hosts simultaneously) like shutdown and rm. Neither of these lists should be considered comprehensive.
- 
+
 Starting tips:
 •	Familiarize yourself with *info, *status, and *result
 •	The window (or tab) title bar should show completion status for running commands. To kill a running command, Ctrl-C will need to be hit twice in rapid succession. A single-hit of Ctrl-C will only report the list of nodes that have not completed – the second one also does not really kill the process, it just detches the shell from waiting on them, and gets your prompt back.
@@ -40,5 +40,4 @@ Starting tips:
 •	If you have a short bash (or python or perl) script, you can use "*run name_of_local_script" and the shell will push out a copy from the local host to all the nodes and run it. Be sure to debug your script locally before running 100 copies of it.
 •	Each session, by default, creates its own logging directory for session commands, and each node's stdout and stderr. You can review these files after the fact.
 •	*get can conveniently pull files from all hosts, but should only be used for small files. It is a hack that runs cat on the remote nodes and captures the streamed output. This should probably be redone as a reverse of...
-•	*sftp can push a local file out to all the remote hosts. It actually uses an independent SFTP session across the existing SSH transport, and is respectable performance-wise. 	
-
+•	*sftp can push a local file out to all the remote hosts. It actually uses an independent SFTP session across the existing SSH transport, and is respectable performance-wise.

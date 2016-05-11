@@ -33,7 +33,12 @@ import threading
 import netaddr
 import radssh
 import paramiko
-import Crypto
+
+# Paramiko 2.0 switched dependency from PyCrypto to cryptography.io
+if paramiko.__version_info__ >= (2, 0):
+    import cryptography as crypto_module
+else:
+    import Crypto as crypto_module
 
 
 def open_file(name):
@@ -66,7 +71,7 @@ if __name__ == '__main__':
     print('Package RadSSH %s from (%s)' % (radssh.version, radssh.__file__))
     # Dependent modules - Print version and location
     print('  Using Paramiko ', paramiko.__version__, 'from', paramiko.__file__)
-    print('  Using PyCrypto', Crypto.__version__, 'from', Crypto.__file__)
+    print('  Using', crypto_module.__name__, crypto_module.__version__, 'from', crypto_module.__file__)
     print('  Using netaddr', netaddr.__version__, 'from', netaddr.__file__)
     print()
 

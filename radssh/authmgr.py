@@ -217,7 +217,7 @@ class AuthManager(object):
                                 warnings.warn(RuntimeWarning(
                                     'Ignoring unusable PKCSOAEP encrypted password from %s (line %d)' %
                                     (auth_file, line_no)))
-                                self.logger.error('PKCS encryption not supported by PyCrypto - Ignoring encrypted password from %s (line %d)', auth_file, line_no)
+                                self.logger.error('PKCS encryption not supported by cryptography module - Ignoring encrypted password from %s (line %d)', auth_file, line_no)
                                 continue
                             self.add_password(encrypted_password, filter)
                             self.logger.info('PKCS encrypted password loaded from %s (line %d)', auth_file, line_no)
@@ -351,7 +351,7 @@ class AuthManager(object):
                         else:
                             # Wipe password and prompt again, if able
                             print('Password incorrect')
-                            password = None    
+                            password = None
 
         # Part 2 of save_banner workaround - shove it into the current auth_handler
         if T.save_banner:
