@@ -167,9 +167,19 @@ def _importKey(filename, allow_prompt=True, logger=None):
     return RuntimeError('Unrecognized key: %s' % filename)
 
 
+UNUSED_PARAMETER = object()
+
+
 class AuthManager(object):
     '''Manage keys and passwords used for paramiko authentication'''
-    def __init__(self, default_user, auth_file='./.radssh_authfile', include_agent=False, include_userkeys=False, default_password=None, try_auth_none=True):
+    # Next major release (2.0) change the API call to no longer support include_agent
+    # and include_userkeys parameters in favor of ssh_config based options to control
+    # exactly the same behavior. Issue a FutureWarning for now if these parameters are used.
+    def __init__(self, default_user, auth_file='./.radssh_authfile', include_agent=UNUSED_PARAMETER, include_userkeys=UNUSED_PARAMETER, default_password=None, try_auth_none=True):
+        if include_agent != UNUSED_PARAMETER:
+            warnings.warn(FutureWarning('AuthManager will no longer support include_agent starting with 2.0: passed value (%s) ignored' % include_agent), stacklevel=2)
+        if include_userkeys != UNUSED_PARAMETER:
+            warnings.warn(FutureWarning('AuthManager will no longer support include_userkeys starting with 2.0: passed value (%s) ignored' % include_userkeys), stacklevel=2)
         self.keys = []
         self.passwords = []
         self.default_passwords = {}
@@ -184,11 +194,7 @@ class AuthManager(object):
         else:
             self.default_user = os.environ.get('SSH_USER', os.environ['USER'])
 
-        if include_agent:
-            self.logger.debug('Authentication can use SSH Agent (if available)')
-            self.agent_connection = paramiko.Agent()
-        else:
-            self.agent_connection = None
+        self.agent_connection = paramiko.Agent()
 
         if auth_file:
             self.read_auth_file(auth_file)

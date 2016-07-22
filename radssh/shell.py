@@ -314,8 +314,6 @@ def radssh_shell_main():
     # Make an AuthManager to handle user authentication
     a = ssh.AuthManager(defaults['username'],
                         auth_file=os.path.expanduser(defaults['authfile']),
-                        include_agent=(defaults['ssh-agent'] == 'on'),
-                        include_userkeys=(defaults['ssh-identity'] == 'on'),
                         try_auth_none=(defaults['try_auth_none'] == 'on'))
 
     # Load Plugins to aid in host lookups and add *commands dynamically

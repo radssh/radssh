@@ -27,7 +27,9 @@ deprecated = {
     'verbose': 'Use loglevel=[CRITICAL|ERROR|WARNING|INFO|DEBUG] instead',
     'paramiko_log_level': 'Use loglevel for controlling RadSSH and Paramiko logging',
     'hostkey.verify': 'Set StrictHostKeyChecking in standard SSH Config file (~/.ssh/config)',
-    'hostkey.known_hosts': 'Set UserKnownHostsFile in standard SSH Config file (~/.ssh/config)'
+    'hostkey.known_hosts': 'Set UserKnownHostsFile in standard SSH Config file (~/.ssh/config)',
+    'ssh-identity': 'Set IdentityFile in standard SSH Config file (~/.ssh/config)',
+    'ssh-agent': 'Set IdentitiesOnly in standard SSH Config file (~/.ssh/config)'
 }
 
 default_config = '''
@@ -75,10 +77,6 @@ quota.bytes=0
 # Connection & Authentication Options
 # Username defaults to $SSH_USER (or $USER) if not set here
 # username=root
-# Permit public key authentication by keys loaded into ssh-agent
-ssh-agent=off
-# Also access ~/.ssh/id_rsa and ~/.ssh/id_dsa without needing ssh-agent
-ssh-identity=off
 # Supplemental authentication file for more keys and/or passwords
 authfile=~/.radssh_auth
 

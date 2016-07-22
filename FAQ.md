@@ -42,7 +42,9 @@ RadSSH Shell
 
 #. Can I change the username that RadSSH uses for login?
 
-   By default, the local $USER environment variable is used. This can be overridden by setting a **username** in the configuration file '~/.radssh_config'. or on the command line with **--username=newname**
+   By default, the local $USER environment variable is used. This can be overridden by setting a **username** in the configuration file '~/.radssh_config'. or on the command line with **--username=newname**.
+
+   Starting with version 1.1, RadSSH will apply User settings from ssh_config (~/.ssh/config) file.
 
 #. Why doesn't **exit** work?
 
@@ -77,7 +79,7 @@ User Authentication
 
 #. Can I use SSH keys to authenticate instead of passwords?
 
-   Yes. You will need to indicate to RadSSH that you want to use identity keyfiles (~/.ssh/id_rsa & ~/.ssh/id_dsa) with **--ssh-identity=on**. RadSSH can also use keys available via SSH Agent, by enabling the option **--ssh-agent=on**. Both of these configuration options are off by default.
+   Yes. RadSSH will attempt to use (~/.ssh/id_rsa, ~/.ssh/id_dsa, ~/.ssh/id_ecdsa) by default, or filenames set with IdentityFile in the standard SSH configuration file (~/.ssh/config), as of RadSSH version 1.1. In addition, keys available via connection to ssh-agent will be tried.
 
    You can also configure RadSSH to use keyfiles from other locations, through use of an AuthFile, which enables you to specify key files and passwords used for authentication.
 
