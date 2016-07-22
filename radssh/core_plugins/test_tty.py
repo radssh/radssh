@@ -68,7 +68,8 @@ def radssh_tty(cluster, logdir, cmd, *args):
     oldtty = termios.tcgetattr(sys.stdin)
     tty.setraw(sys.stdin.fileno())
     tty.setcbreak(sys.stdin.fileno())
-    fcntl.fcntl(sys.stdin, fcntl.F_SETFL, os.O_NONBLOCK)
+    old_fcntl = fcntl.fcntl(sys.stdin, fcntl.F_GETFL)
+    fcntl.fcntl(sys.stdin, fcntl.F_SETFL, old_fcntl | os.O_NONBLOCK)
     prompt_delay = 3.0
     for x in args:
         if not cluster.locate(x):
@@ -110,5 +111,6 @@ def radssh_tty(cluster, logdir, cmd, *args):
             if session:
                 session.close()
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
+    fcntl.fcntl(sys.stdin, fcntl.F_SETFL, old_fcntl)
 
 star_commands = {'*tty': radssh_tty}
