@@ -15,7 +15,12 @@ from __future__ import print_function  # Requires Python 2.6 or higher
 
 import os
 import threading
+import warnings
 import paramiko.hostkeys
+
+
+# Deprecated as of 1.1 - Use known_hosts rewrite instead if using this API
+warnings.warn(FutureWarning('RadSSH hostkey module is no longer supported, and will be removed in release 2.0. Port existing code to use radssh.known_hosts instead.'))
 
 
 class CodeMap(object):
