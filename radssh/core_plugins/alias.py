@@ -30,7 +30,7 @@ def init(**kwargs):
         p.wait()
         for line in p.stdout:
             name, value = line.split('=', 1)
-            aliases[name] = value.strip()[1:-1]
+            aliases[name] = value.strip()[1:-1].replace("'\\''", "'")
 
 
 def command_listener(cmd):
