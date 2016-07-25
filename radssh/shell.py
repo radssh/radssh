@@ -135,7 +135,7 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                         failures.setdefault(None, []).append(k)
                 if failures:
                     print('\nSummary of return codes:')
-                    for k, v in [(0, completions)] + failures.items():
+                    for k, v in [(0, completions)] + list(failures.items()):
                         if len(v) > 5:
                             print(k, '\t- (%d hosts)' % len(v))
                         else:

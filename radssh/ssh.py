@@ -24,7 +24,6 @@ import uuid
 import fnmatch
 import netaddr
 import re
-import getpass
 import logging
 import hashlib
 import shlex
@@ -39,7 +38,7 @@ import paramiko
 from .authmgr import AuthManager
 from .streambuffer import StreamBuffer
 from .dispatcher import Dispatcher, UnfinishedJobs
-from .console import RadSSHConsole
+from .console import RadSSHConsole, user_password
 from . import known_hosts
 from . import config
 from .keepalive import KeepAlive, ServerNotResponding
@@ -570,7 +569,7 @@ class Cluster(object):
                                 include_agent=False, include_userkeys=False, try_auth_none=False)
         else:
             # Give the option of reusing the existing auth options with new user
-            alternate_password = getpass.getpass(
+            alternate_password = user_password(
                 'Please enter a password for (%s) or leave blank to retry auth options with new user:' % user)
             if alternate_password:
                 retry = AuthManager(user, auth_file=None, include_agent=False, include_userkeys=False, default_password=alternate_password)

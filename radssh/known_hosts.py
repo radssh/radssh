@@ -30,6 +30,7 @@ from collections import defaultdict
 
 import paramiko
 
+from .console import user_input
 
 # Keep a dict of the files we have loaded
 _loaded_files = {}
@@ -331,8 +332,7 @@ class KnownHosts (object):
                 reply = ''
                 fingerprint = printable_fingerprint(key)
                 while reply.upper() not in ('Y', 'N', 'A'):
-                    # reply = raw_input('Accept new %s key [%s] for host %s ? (y/n/a) ' % (key.get_name(), str(key.get_fingerprint()), host))
-                    reply = raw_input('Accept new %s key with fingerprint [%s] for host %s ? (y/n/a) ' % (key.get_name(), fingerprint, host))
+                    reply = user_input('Accept new %s key with fingerprint [%s] for host %s ? (y/n/a) ' % (key.get_name(), fingerprint, host))
                 if reply.upper() == 'N':
                     return False
                 if reply.upper() == 'A':

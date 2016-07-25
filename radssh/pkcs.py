@@ -21,8 +21,9 @@ from __future__ import print_function  # Requires Python 2.6 or higher
 
 import os
 import base64
-import getpass
 import warnings
+
+from .console import user_password
 
 
 try:
@@ -55,7 +56,7 @@ try:
                     if setup.default_passphrase:
                         # No need to interactively prompt - we failed
                         raise
-                    passphrase = getpass.getpass('Enter passphrase for [%s]: ' % setup.keyfile)
+                    passphrase = user_password('Enter passphrase for [%s]: ' % setup.keyfile)
                     self.private_key = load_pem_private_key(setup.keydata, password=passphrase, backend=self.backend)
                 self.public_key = self.private_key.public_key()
 
@@ -90,7 +91,7 @@ except ImportError:
                     if setup.default_passphrase:
                         # No need to interactively prompt - we failed
                         raise
-                    passphrase = getpass.getpass('Enter passphrase for [%s]: ' % setup.keyfile)
+                    passphrase = user_password('Enter passphrase for [%s]: ' % setup.keyfile)
                     rsakey = RSA.importKey(setup.keydata, passphrase)
             except Exception as e:
                 raise PKCSError('Unable to load key - %s' % str(e))

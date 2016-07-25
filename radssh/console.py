@@ -22,11 +22,25 @@ stderr (highlight) or not.
 from __future__ import print_function
 import sys
 import threading
+import getpass
 from collections import deque, defaultdict
 try:
     import queue
 except ImportError:
     import Queue as queue
+
+
+console_mutex = threading.Lock()
+def user_input(prompt):
+    with console_mutex:
+        answer = raw_input(prompt)
+    return answer
+
+
+def user_password(prompt):
+    with console_mutex:
+        answer = getpass.getpass(prompt)
+    return answer
 
 
 def monochrome(tag, text):
@@ -99,8 +113,9 @@ class RadSSHConsole(object):
     def progress(self, s):
         '''For progress-bar like output; no newlines'''
         if not self.quietmode:
-            print(s, end='')
-            sys.stdout.flush()
+            with console_mutex:
+                print(s, end='')
+                sys.stdout.flush()
 
     def replay_recent(self, label):
         '''Output the recent lines sent tagged from "label" - Used for Ctrl-C handler'''
@@ -116,12 +131,13 @@ class RadSSHConsole(object):
             try:
                 tag, text = self.q.get()
                 if not self.quietmode:
-                    # Tag is tuple of (label, stderr_flag)
-                    for line in self.formatter(tag, text):
-                        print(line, end='')
-                        if self.retain_recent:
-                            self.recent_history[str(tag[0])].append(line)
-                    sys.stdout.flush()
+                    with console_mutex:
+                        # Tag is tuple of (label, stderr_flag)
+                        for line in self.formatter(tag, text):
+                            print(line, end='')
+                            if self.retain_recent:
+                                self.recent_history[str(tag[0])].append(line)
+                        sys.stdout.flush()
             except Exception as e:
                 print('Console Thread Exception: %s\n' % str(e))
                 print('(%s): %s\n' % (tag, text))

@@ -19,7 +19,7 @@ from __future__ import print_function  # Requires Python 2.6 or higher
 
 import os
 import warnings
-import getpass
+#import getpass
 import fnmatch
 import threading
 import logging
@@ -30,6 +30,7 @@ with warnings.catch_warnings(record=True):
 import netaddr
 
 from .pkcs import PKCS_OAEP, PKCSError
+from .console import user_password
 
 
 class PlainText(object):
@@ -90,7 +91,7 @@ def _importKey(filename, allow_prompt=True, logger=None):
         retries = 3
         while retries:
             try:
-                passphrase = getpass.getpass('Enter passphrase for RSA key [%s]: ' % filename)
+                passphrase = user_password('Enter passphrase for RSA key [%s]: ' % filename)
                 key = paramiko.RSAKey(filename=filename, password=passphrase)
                 if logger:
                     logger.debug('Loaded passphrase protected RSA key from %s', filename)
@@ -117,7 +118,7 @@ def _importKey(filename, allow_prompt=True, logger=None):
         retries = 3
         while retries:
             try:
-                passphrase = getpass.getpass('Enter passphrase for ECDSA key [%s]: ' % filename)
+                passphrase = user_password('Enter passphrase for ECDSA key [%s]: ' % filename)
                 key = paramiko.ECDSAKey(filename=filename, password=passphrase)
                 if logger:
                     logger.debug('Loaded passphrase protected ECDSA key from %s', filename)
@@ -145,7 +146,7 @@ def _importKey(filename, allow_prompt=True, logger=None):
         retries = 3
         while retries:
             try:
-                passphrase = getpass.getpass('Enter passphrase for DSA key [%s]: ' % filename)
+                passphrase = user_password('Enter passphrase for DSA key [%s]: ' % filename)
                 key = paramiko.DSSKey(filename=filename, password=passphrase)
                 if logger:
                     logger.debug('Loaded passphrase protected DSA key from %s', filename)
@@ -348,7 +349,7 @@ class AuthManager(object):
                     password = self.default_passwords.get(auth_user)
                     while not auth_success and retries > 0:
                         if not password:
-                            password = PlainText(getpass.getpass(
+                            password = PlainText(user_password(
                                 'Please enter a password for (%s@%s) :' % (auth_user, T.getName())))
                             retries -= 1
                         auth_success = self.try_auth(T, [(None, password)], True, auth_user)
@@ -366,7 +367,7 @@ class AuthManager(object):
         return auth_success
 
     def interactive_password(self):
-        self.default_passwords[None] = PlainText(getpass.getpass(
+        self.default_passwords[None] = PlainText(user_password(
             'Please enter a password for (%s) :' % self.default_user))
 
     def __str__(self):
