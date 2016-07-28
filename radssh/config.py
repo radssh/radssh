@@ -23,7 +23,7 @@ except ImportError:
 
 
 system_settings_file = '/etc/radssh_config'
-deprecated = {
+obsoleted = {
     'verbose': 'Use loglevel=[CRITICAL|ERROR|WARNING|INFO|DEBUG] instead',
     'paramiko_log_level': 'Use loglevel for controlling RadSSH and Paramiko logging',
     'hostkey.verify': 'Set StrictHostKeyChecking in standard SSH Config file (~/.ssh/config)',
@@ -38,7 +38,7 @@ default_config = '''
 ### All other lines should be of the form keyword=value
 
 ### Shell Behavior Defaults
-# NOTE: verbose and paramiko_log_level settings have been deprecated
+# NOTE: verbose and paramiko_log_level settings are obsolete
 # Use loglevel instead, and logging from both RadSSH and paramiko get captured to radssh.log
 #
 # loglevel can be set to [CRITICAL|ERROR|WARNING|INFO|DEBUG]
@@ -92,7 +92,7 @@ plugins=
 # avoid loading some system (or user) plugins that normally load
 disable_plugins=
 
-# Options hostkey.verify and hostkey.known_hosts have been deprecated
+# Options hostkey.verify and hostkey.known_hosts are obsoleted
 # in favor of using standard SSH Config settings StrictHostKeyChecking
 # and UserKnownHostsFile. RadSSH can use a different config settings
 # file by overriding the path to 'ssh_config' here:
@@ -149,11 +149,11 @@ def load_settings_file(f):
     return settings
 
 
-def deprecated_check(d, filename=None):
-    '''Check settings dict against the deprecated options'''
-    for k in deprecated:
+def obsoleted_check(d, filename=None):
+    '''Check settings dict against the obsoleted options'''
+    for k in obsoleted:
         if k in d:
-            warnings.warn('DEPRECATED: [%s] found in %s is ignored.\n\t%s' % (k, filename, deprecated[k]))
+            warnings.warn('OBSOLETE: [%s] found in %s is ignored.\n\t%s' % (k, filename, obsoleted[k]))
             d.pop(k)
 
 
@@ -185,7 +185,7 @@ def command_line_settings(cmdline_args=[], permitted=True):
                 # Only apply command line option if user.settings is still enabled
                 if permitted:
                     commandline_setting = {k[2:]: v}
-                    deprecated_check(commandline_setting, 'command line argument')
+                    obsoleted_check(commandline_setting, 'command line argument')
                     settings.update(commandline_setting)
                 else:
                     warnings.warn(RuntimeWarning('Command line option: %s (ignored) - User settings disabled by administrator' % (arg)))
@@ -202,7 +202,7 @@ def load_settings(cmdline_args=None):
     if os.path.exists(system_settings_file):
         with open(system_settings_file) as f:
             system_settings = load_settings_file(f)
-            deprecated_check(system_settings, system_settings_file)
+            obsoleted_check(system_settings, system_settings_file)
             settings.update(system_settings)
     # If admin has not disabled user settings, load them and finally the command line settings
     if settings.get('user.settings'):
@@ -210,7 +210,7 @@ def load_settings(cmdline_args=None):
         if os.path.exists(user_settings_file):
             with open(user_settings_file) as f:
                 user_settings = load_settings_file(f)
-                deprecated_check(user_settings, user_settings_file)
+                obsoleted_check(user_settings, user_settings_file)
                 settings.update(user_settings)
     if cmdline_args and settings.get('user.settings'):
         if isinstance(cmdline_args, list):

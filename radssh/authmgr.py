@@ -19,15 +19,15 @@ from __future__ import print_function  # Requires Python 2.6 or higher
 
 import os
 import warnings
-#import getpass
 import fnmatch
 import threading
 import logging
 import base64
 
+import netaddr
+
 with warnings.catch_warnings(record=True):
     import paramiko
-import netaddr
 
 from .pkcs import PKCS_OAEP, PKCSError
 from .console import user_password

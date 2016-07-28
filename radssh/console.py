@@ -31,6 +31,8 @@ except ImportError:
 
 
 console_mutex = threading.Lock()
+
+
 def user_input(prompt):
     with console_mutex:
         answer = raw_input(prompt)
