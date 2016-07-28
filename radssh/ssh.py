@@ -157,11 +157,11 @@ def run_local_command(original_name, remote_hostname, port, remote_username, ssh
             '%p': str(port),
             '%r': sshconfig.get('user', remote_username),
             '%u': os.getlogin(),
-            '%C': hashlib.sha1(
+            '%C': hashlib.sha1((
                 socket.gethostname() +
                 remote_hostname +
                 str(port) +
-                sshconfig.get('user', remote_username)).hexdigest()
+                sshconfig.get('user', remote_username)).encode('UTF8')).hexdigest()
         }
         for token, subst in translations.items():
             cmd = cmd.replace(token, subst)
@@ -566,13 +566,13 @@ class Cluster(object):
         if not user or user == self.auth.default_user:
             # Not switching users, we know the existing auth won't work
             retry = AuthManager(self.auth.default_user, auth_file=None,
-                                include_agent=False, include_userkeys=False, try_auth_none=False)
+                                try_auth_none=False)
         else:
             # Give the option of reusing the existing auth options with new user
             alternate_password = user_password(
                 'Please enter a password for (%s) or leave blank to retry auth options with new user:' % user)
             if alternate_password:
-                retry = AuthManager(user, auth_file=None, include_agent=False, include_userkeys=False, default_password=alternate_password)
+                retry = AuthManager(user, auth_file=None, default_password=alternate_password)
             else:
                 retry = self.auth
             self.auth.default_user = user
