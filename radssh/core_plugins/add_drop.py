@@ -21,15 +21,22 @@ import radssh.ssh as ssh
 
 def star_add(cluster, logdir, cmd, *args):
     '''Add node connections to the cluster working set'''
+    new_hosts = []
     for host in args:
         if not cluster.locate(host):
-            try:
-                t = ssh.connection_worker(host, None, cluster.auth)
-                cluster.connections[host] = t
-            except Exception as e:
-                print(host, repr(e))
+            new_hosts.append((host, None))
         else:
             print('Host %s already connected' % host)
+    if new_hosts:
+        new_cluster = ssh.Cluster(new_hosts, auth=cluster.auth, defaults=cluster.defaults)
+        for k,v in new_cluster.connections.items():
+            cluster.connections[k] = v
+            cluster.connect_timings[k] = new_cluster.connect_timings[k]
+            
+        print('Added to cluster:')
+        for host, status in new_cluster.status():
+                print('%14s : %s' % (str(host), status))
+
 
 
 def star_drop(cluster, logdir, cmd, *args):
