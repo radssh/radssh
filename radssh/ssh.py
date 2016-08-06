@@ -179,18 +179,13 @@ def connection_worker(host, conn, auth, sshconfig={}):
     if not conn:
         conn = host
     if isinstance(conn, basestring):
-        if ':' in conn:
-            # This will break when using IPv6 addresses...
-            conn, port = conn.split(':', 1)
-        else:
-            port = sshconfig.get('port', '22')
         hostname = sshconfig.get('hostname', conn)
+        port = sshconfig.get('port', '22')
         proxy = sshconfig.get('proxycommand')
         if proxy:
             logging.getLogger('radssh').info('Connecting to %s via ProxyCommand "%s"', hostname, proxy)
             s = paramiko.ProxyCommand(proxy)
         else:
-            # hostname is a potentially fake label, use conn as actual connection destination
             try:
                 timeout = sshconfig.get('connecttimeout')
                 if timeout:
@@ -488,13 +483,14 @@ class Cluster(object):
                 logging.getLogger('radssh').warning('Unable to process system ssh_config file (%s): %s', system_config, e)
 
         for label, conn in hostlist:
+            config = self.get_ssh_config(label, conn)
             if mux:
                 for idx, mux_var in enumerate(mux.get(label, [])):
                     mux_label = '%s:%d' % (label, idx)
-                    self.pending[self.dispatcher.submit(connection_worker, mux_label, conn, self.auth, self.sshconfig.lookup(str(label)))] = label
+                    self.pending[self.dispatcher.submit(connection_worker, mux_label, conn, self.auth, config)] = label
                     self.mux[mux_label] = mux_var
             else:
-                self.pending[self.dispatcher.submit(connection_worker, label, conn, self.auth, self.sshconfig.lookup(str(label)))] = label
+                self.pending[self.dispatcher.submit(connection_worker, label, conn, self.auth, config)] = label
         self.update_connections()
         # Start remainder of dispatcher threads
         self.dispatcher.start_threads(len(self.connections))
@@ -604,6 +600,39 @@ class Cluster(object):
             # self.pending[self.dispatcher.submit(connection_worker, k, conn, retry, self.sshconfig.lookup(str(k)))] = k
             self.pending[self.dispatcher.submit(connection_worker, k, conn, retry, {'identityfile': []})] = k
         self.update_connections()
+
+    def get_ssh_config(self, label, connection_spec=None):
+        '''Lookup or create a dict of SSHConfig options for the given host'''
+        if isinstance(connection_spec, basestring):
+            host_spec = connection_spec
+        else:
+            host_spec = label
+        # Support specs in form of user@host:port
+        if '@' in host_spec:
+            supplied_user, host_spec = host_spec.split('@', 1)
+        else:
+            supplied_user = None
+        if ':' in host_spec:
+            # Attempt to disambiguate IPv6
+            host_spec, supplied_port = host_spec.rsplit(':', 1)
+            if ':' in host_spec:
+                if host_spec[0] == '[' and host_spec[-1] == ']':
+                    host_spec = host_spec[1:-1]
+                else:
+                    host_spec = host_spec + ':' + supplied_port
+                    supplied_port = None
+        else:
+            supplied_port = None
+        config = self.sshconfig.lookup(host_spec)
+        # If spec included port or user, overrride the SSHConfig values
+        if supplied_port:
+            config['port'] = supplied_port
+        if supplied_user:
+            config['user'] = supplied_user
+        # if SSHConfig has no value for LogLevel, use the cluster setting
+        if 'loglevel' not in config:
+            config['loglevel'] = self.defaults['loglevel'].upper()
+        return config
 
     def tunnel_connections(self, hostlist, jumpbox=None):
         '''Create a cluster of tunneled connections through a jumpbox'''
