@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2014 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -67,8 +67,10 @@ setup(name='radssh',
           'Intended Audience :: Developers',
           'License :: OSI Approved :: BSD License',
           'Operating System :: POSIX',
+          'Programming Language :: Python :: 2',
           'Programming Language :: Python :: 2.6',
           'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3',
           'Programming Language :: Python :: 3.3',
           'Programming Language :: Python :: 3.4',
           'Programming Language :: Python :: 3.5',

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -29,14 +29,13 @@ def star_add(cluster, logdir, cmd, *args):
             print('Host %s already connected' % host)
     if new_hosts:
         new_cluster = ssh.Cluster(new_hosts, auth=cluster.auth, defaults=cluster.defaults)
-        for k,v in new_cluster.connections.items():
+        for k, v in new_cluster.connections.items():
             cluster.connections[k] = v
             cluster.connect_timings[k] = new_cluster.connect_timings[k]
-            
+
         print('Added to cluster:')
         for host, status in new_cluster.status():
                 print('%14s : %s' % (str(host), status))
-
 
 
 def star_drop(cluster, logdir, cmd, *args):

@@ -5,7 +5,7 @@
 
 Installation Guide
 ==================
- 
+
 The preferred way to install RadSSH is to use Python's `pip <http://pip.readthedocs.org/en/latest/>` utility. If you do not have administration (root) privileges to install Python packages into the system level directories, pip can install RadSSH to a `virtual environment <https://pypi.python.org/pypi/virtualenv>`.
 
 Pip will handle the appropriate installation of RadSSH for your Python environment, either system-wide or virtual environment, and also utilitze the Python Package Index to install any missing dependencies. RadSSH currently requires `Paramiko <https://pypi.python.org/pypi/paramiko>` and `netaddr <https://pypi.python.org/pypi/netaddr>` packages, and pip will download these (and their dependencies) and install them if they are not already installed.
@@ -32,7 +32,7 @@ As with installation from PyPI, this will download and install (from source on G
 Installing from Developer Source
 --------------------------------
 
-If you have a local source tree, either from a developer checkout or from un-tarred source package, you can install RadSSH in a similar fashion, replacing the URL of the repository with the local directory. Alternatively, you can ``cd`` into the source directory and run ``pip install .`` 
+If you have a local source tree, either from a developer checkout or from un-tarred source package, you can install RadSSH in a similar fashion, replacing the URL of the repository with the local directory. Alternatively, you can ``cd`` into the source directory and run ``pip install .``
 
 Verifying the Install
 =====================
@@ -41,16 +41,16 @@ Once installed, you should run ``python -m radssh`` (or if running Python 2.6, `
 
 Sample Output::
 
-    (sample_env)[paul@pkapp2 ~]$ python -m radssh.__main__
+    (sample_env)[paul@pkapp2 ~]$ python -m radssh
     RadSSH Main Module
-    Package RadSSH 1.0.0 [r5239 @ 2014-12-03 16:07:48Z] from (radssh/__init__.py)
-      Using Paramiko  1.15.1 from /usr/lib/python2.6/site-packages/paramiko/__init__.pyc
-      Using PyCrypto 2.6.1 from /usr/lib64/python2.6/site-packages/Crypto/__init__.pyc
-      Using netaddr 0.7.12 from /usr/lib/python2.6/site-packages/netaddr/__init__.pyc
+    Package RadSSH 1.1.1 from (/usr/lib/python2.7/site-packages//radssh/__init__.pyc)
+      Using Paramiko  1.15.2 from /usr/lib/python2.7/site-packages/paramiko/__init__.pyc
+      Using PyCrypto 2.6.1 from /usr/lib64/python2.7/site-packages/Crypto/__init__.pyc
+      Using netaddr 0.7.12 from /usr/lib/python2.7/site-packages/netaddr/__init__.pyc
 
-    Python 2.6.6 (CPython)
+    Python 2.7.6 (CPython)
     Running on Linux [pkapp2.risk.regn.net]
-      Scientific Linux (6.6/Carbon)
+      Scientific Linux (6.8/Carbon)
 
     Checking runtime limits...
       System is able to open a maximum of 1021 concurrent files
@@ -62,4 +62,3 @@ Sample Output::
       Thread check completed in 0.450732 seconds
 
     End of runtime check
-

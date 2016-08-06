@@ -1,9 +1,22 @@
-# RadSSH plugin *tar
-# Helper to simplify collecting files from remote hosts
-# by tar'ing (and optionally compressing) them prior to transfer.
-# Instead of using 'cat', as *get does, the remote command is 'tar'
-# with options to feed the resulting tar file contents to stdout
-# where RadSSH can write local files with the stdout buffer content.
+#
+# Copyright (c) 2014, 2016 LexisNexis Risk Data Management Inc.
+#
+# This file is part of the RadSSH software package.
+#
+# RadSSH is free software, released under the Revised BSD License.
+# You are permitted to use, modify, and redsitribute this software
+# according to the Revised BSD License, a copy of which should be
+# included with the distribution as file LICENSE.txt
+#
+
+'''
+RadSSH plugin *tar
+Helper to simplify collecting files from remote hosts
+by tar'ing (and optionally compressing) them prior to transfer.
+Instead of using 'cat', as *get does, the remote command is 'tar'
+with options to feed the resulting tar file contents to stdout
+where RadSSH can write local files with the stdout buffer content.
+'''
 
 import os
 import itertools

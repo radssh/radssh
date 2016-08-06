@@ -1,6 +1,6 @@
 Features
 ==========
- - New module for host key handling and validation, closer to the functionality of OpenSSH. Significantly improved performance when operating with very large known_hosts files. 
+ - New module for host key handling and validation, closer to the functionality of OpenSSH. Significantly improved performance when operating with very large known_hosts files.
 
  - Now relies on standard OpenSSH config file settings for options related to connection, host key validation, and user authentiction. Many, but not all options are supported.
 
@@ -16,6 +16,8 @@ Features
  - Added support for ECDSA key files for user authentication.
 
  - Now supports for Paramiko version 2.0, and cryptography.io. Installations using Paramiko 1.X can continue to be used along with the unmaintained PyCrypto module.
+
+  - Improved support for specifying explicit port and username with URI style formatting (user@host:port).
 
 Issues Fixed
 ==========
@@ -43,7 +45,8 @@ Enhancements
 Plugin Enhancements
 =================
  - **\*enable** now includes explicit count of hosts when all hosts enabled.
- - **\*drop** with no arguments will now drop hosts that are not connected/authenticated
+ - **\*drop** with no arguments will now drop hosts that are not connected/authenticated.
+  - **\*add** now handles URI style (user@host:port) format; lists summary of connections added to cluster.
  - Now supports shell alias definitions with escaped single quotes are supported.
 
 API Changes
@@ -61,4 +64,3 @@ Additional Notes
  - **PyCrypto** identified as an unmaintained module. **Paramiko** 2.0 has transitioned to using **cryptography**. RadSSH usage will prefer to use **cryptography**, but will continue to work with **PyCrypto** and **Paramiko** 1.X. Installations are strongly recommended to upgrade to using **cryptography** (and **Paramiko** 2.0) from **PyCrypto**. When RadSSH is unable to load the preferred **cryptography** module and reverts to using **PyCrypto**, a warning will be issued encouraging users to install **cryptography**.
  - **Paramiko** library does not include support for OpenSSH configuration *Match* blocks, so currently these are not supported for RadSSH configuration options as well.
  - Python 2.6 and Python 3.2 will continue to be supported by RadSSH 1.1.0, even though these Python versions are no longer being actively maintained. Future releases of RadSSH may not continue focus or effort on compatibility with these python versions.
-
