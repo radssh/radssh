@@ -92,7 +92,7 @@ def star_info(cluster, logdir, cmdline, *args):
 def star_status(cluster, logdir, cmdline, *args):
     '''Print result itemization'''
     if not args:
-        args = sorted(cluster.connections.keys())
+        args = sorted(cluster)
     if not cluster.last_result:
         print('Cluster status not availble / no command has been run')
         return
@@ -118,7 +118,7 @@ def star_status(cluster, logdir, cmdline, *args):
 def star_result(cluster, logdir, cmdline, *args):
     '''Re-print stdout/stderr for last run job(s)'''
     if not args:
-        args = sorted(cluster.connections.keys())
+        args = sorted(cluster)
     for x in args:
         job = cluster.last_result.get(cluster.locate(x), None)
         if job:
@@ -160,7 +160,7 @@ def star_get(cluster, logdir, cmdline, *args):
 def star_shell(cluster, logdir, cmdline, *args):
     '''Drop into a local shell - exit subshell to return with session intact'''
     connections = []
-    for k in sorted(cluster.connections.keys()):
+    for k in sorted(cluster):
         if k not in cluster.disabled:
             connections.append(str(k))
 

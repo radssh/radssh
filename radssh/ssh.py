@@ -751,7 +751,7 @@ class Cluster(object):
         result = {}
         last_interrupt = 0
         chunker = Chunker(self.chunk_size, self.chunk_delay)
-        for k in sorted(self.connections.keys()):
+        for k in self:
             if k in self.disabled:
                 continue
             chunker.add(k)
@@ -866,7 +866,7 @@ class Cluster(object):
 
     def sftp(self, src, dst=None, attrs=None):
         '''SFTP a file (put) to all nodes'''
-        for k in sorted(self.connections.keys()):
+        for k in self:
             t = self.connections[k]
             if k in self.disabled:
                 continue
@@ -897,7 +897,7 @@ class Cluster(object):
         '''Return a combined list of connection status text messages'''
         good = []
         bad = []
-        for k in sorted(self.connections.keys()):
+        for k in self:
             t = self.connections[k]
             if k in self.connect_timings:
                 connect_time = self.connect_timings[k]
@@ -945,6 +945,13 @@ class Cluster(object):
             if str(k) == s:
                 return k
         return None
+
+    def __iter__(self):
+        '''Get connection keys in (hybrid) sorted order'''
+        def hybrid_key(x):
+            return(str(type(x)), x)
+        result = sorted(self.connections.keys(), key=hybrid_key)
+        return iter(result)
 
     def close_connections(self):
         '''Disconnect from all remote hosts'''

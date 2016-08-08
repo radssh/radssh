@@ -127,12 +127,12 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                     v = job.result
                     if job.completed:
                         if v.return_code == 0:
-                            completions.append(k)
+                            completions.append(str(k))
                             completion_time += job.end_time - job.start_time
                         else:
                             failures.setdefault(v.return_code, []).append(k)
                     else:
-                        failures.setdefault(None, []).append(k)
+                        failures.setdefault(None, []).append(str(k))
                 if failures:
                     print('\nSummary of return codes:')
                     for k, v in [(0, completions)] + list(failures.items()):
