@@ -117,6 +117,17 @@ def star_status(cluster, logdir, cmdline, *args):
 
 def star_result(cluster, logdir, cmdline, *args):
     '''Re-print stdout/stderr for last run job(s)'''
+    # Check for redirect (> or >>)
+    if '>>' in cmdline:
+        hosts, outfile = cmdline.split('>>')
+        result_file = open(outfile.strip(), 'a')
+        args = hosts.split()[1:]
+    elif '>' in cmdline:
+        hosts, outfile = cmdline.split('>')
+        result_file = open(outfile.strip(), 'w')
+        args = hosts.split()[1:]
+    else:
+        result_file = None
     if not args:
         args = sorted(cluster)
     for x in args:
@@ -125,13 +136,26 @@ def star_result(cluster, logdir, cmdline, *args):
             res = job.result
             running_time = job.end_time - job.start_time
             if isinstance(res, CommandResult):
+                if result_file:
+                    result_file.write('<<< %s: "%s" %s - Return Code [%s] took %0.4g seconds >>>\n' % (x, res.command, res.status, res.return_code, running_time))
                 if res.stdout:
                     cluster.console.q.put(((x, False), res.stdout.decode(cluster.defaults['character_encoding'], 'replace')))
+                    if result_file:
+                        result_file.write(res.stdout)
                 if res.stderr:
                     cluster.console.q.put(((x, True), res.stderr.decode(cluster.defaults['character_encoding'], 'replace')))
+                    if result_file:
+                        result_file.write(res.stderr)
             else:
                 cluster.console.q.put(((x, True), repr(res)))
+                if result_file:
+                    result_file.write('<<< %s: Failed [%s] >>>\n' % (x, repr(res)))
             cluster.console.join()
+            if result_file:
+                result_file.write('\n\n')
+    if result_file:
+        result_file.close()
+        cluster.console.q.put((('*result', False), 'Output saved to file "%s"' % outfile.strip()))
 
 
 def star_get(cluster, logdir, cmdline, *args):
