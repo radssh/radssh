@@ -24,6 +24,7 @@ Issues Fixed
  - A missing *plugins* directory is no longer a fatal runtime error.
  - StreamBuffer closing is no longer vulnerable to **Queue.Full** exception.
  - Fix thread contention issue when prompting user for passwords and accepting new host keys concurrently.
+ - Ordered output mode fixed under Python3. [ Fixed in 1.1.1 ]
 
 Enhancements
 ============
