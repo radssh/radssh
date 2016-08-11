@@ -60,7 +60,7 @@ API Changes
 Known Issues
 ==========
  - Paramiko ProxyCommand may not function correctly under Python3 (https://github.com/paramiko/paramiko/issues/673)
- - Ability to mix & match hostnames and IP addresses leads to many sorting issues under Python3 (#21) [ Fixed in 1.1.1 ]
+ - ~~Ability to mix & match hostnames and IP addresses leads to many sorting issues under Python3 (#21)~~ [ Fixed in 1.1.1 ]
 
 Additional Notes
 ==============
