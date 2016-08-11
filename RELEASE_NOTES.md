@@ -48,6 +48,8 @@ Plugin Enhancements
  - **\*drop** with no arguments will now drop hosts that are not connected/authenticated.
   - **\*add** now handles URI style (user@host:port) format; lists summary of connections added to cluster.
  - Now supports shell alias definitions with escaped single quotes are supported.
+ - **\*result** can include > and >> to save/append to local file [ Added in 1.1.1 ]
+ - **\*history** added to alias plugin, with support for `!nnn` replay of command by history number [ Added in 1.1.1 ]
 
 API Changes
 ==========
@@ -57,7 +59,7 @@ API Changes
 Known Issues
 ==========
  - Paramiko ProxyCommand may not function correctly under Python3 (https://github.com/paramiko/paramiko/issues/673)
- - Ability to mix & match hostnames and IP addresses leads to many sorting issues under Python3 (#21)
+ - Ability to mix & match hostnames and IP addresses leads to many sorting issues under Python3 (#21) [ Fixed in 1.1.1 ]
 
 Additional Notes
 ==============
