@@ -47,7 +47,7 @@ Plugin Enhancements
 =================
  - **\*enable** now includes explicit count of hosts when all hosts enabled.
  - **\*drop** with no arguments will now drop hosts that are not connected/authenticated.
-  - **\*add** now handles URI style (user@host:port) format; lists summary of connections added to cluster.
+ - **\*add** now handles URI style (user@host:port) format; lists summary of connections added to cluster.
  - Now supports shell alias definitions with escaped single quotes are supported.
  - **\*result** can include > and >> to save/append to local file [ Added in 1.1.1 ]
  - **\*history** added to alias plugin, with support for `!nnn` replay of command by history number [ Added in 1.1.1 ]
