@@ -60,7 +60,7 @@ def init(**kwargs):
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         p.wait()
         for line in p.stdout:
-            name, value = line.split('=', 1)
+            name, value = line.decode().split('=', 1)
             aliases[name] = value.strip()[1:-1].replace("'\\''", "'")
 
 

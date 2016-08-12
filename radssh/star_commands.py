@@ -120,11 +120,11 @@ def star_result(cluster, logdir, cmdline, *args):
     # Check for redirect (> or >>)
     if '>>' in cmdline:
         hosts, outfile = cmdline.split('>>')
-        result_file = open(outfile.strip(), 'a')
+        result_file = open(outfile.strip(), 'ab')
         args = hosts.split()[1:]
     elif '>' in cmdline:
         hosts, outfile = cmdline.split('>')
-        result_file = open(outfile.strip(), 'w')
+        result_file = open(outfile.strip(), 'wb')
         args = hosts.split()[1:]
     else:
         result_file = None
@@ -137,7 +137,7 @@ def star_result(cluster, logdir, cmdline, *args):
             running_time = job.end_time - job.start_time
             if isinstance(res, CommandResult):
                 if result_file:
-                    result_file.write('<<< %s: "%s" %s - Return Code [%s] took %0.4g seconds >>>\n' % (x, res.command, res.status, res.return_code, running_time))
+                    result_file.write(('<<< %s: "%s" %s - Return Code [%s] took %0.4g seconds >>>\n' % (x, res.command, res.status, res.return_code, running_time)).encode())
                 if res.stdout:
                     cluster.console.q.put(((x, False), res.stdout.decode(cluster.defaults['character_encoding'], 'replace')))
                     if result_file:
@@ -149,10 +149,10 @@ def star_result(cluster, logdir, cmdline, *args):
             else:
                 cluster.console.q.put(((x, True), repr(res)))
                 if result_file:
-                    result_file.write('<<< %s: Failed [%s] >>>\n' % (x, repr(res)))
+                    result_file.write(('<<< %s: Failed [%s] >>>\n' % (x, repr(res))).encode())
             cluster.console.join()
             if result_file:
-                result_file.write('\n\n')
+                result_file.write(b'\n\n')
     if result_file:
         result_file.close()
         cluster.console.q.put((('*result', False), 'Output saved to file "%s"' % outfile.strip()))
