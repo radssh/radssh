@@ -347,7 +347,7 @@ class AuthManager(object):
                     retries = 0
                 with self.import_lock:
                     password = self.default_passwords.get(auth_user)
-                    while not auth_success and retries > 0:
+                    while not auth_success and retries > 0 and T.is_active():
                         if not password:
                             password = PlainText(user_password(
                                 'Please enter a password for (%s@%s) :' % (auth_user, T.getName())))
@@ -382,6 +382,9 @@ class AuthManager(object):
         if not auth_user:
             auth_user = self.default_user
         for filter, value in candidates:
+            if not T.is_active():
+                self.logger.error('Remote dropped connection')
+                return None
             if filter and filter != '*':
                 remote_ip = netaddr.IPAddress(T.getpeername()[0])
                 try:
