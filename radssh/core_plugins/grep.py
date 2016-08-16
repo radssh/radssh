@@ -18,7 +18,7 @@ def star_grep(cluster, logdir, cmdline, *args):
     '''Scan (not real grep) for string matches in stdout'''
     # Get from cmdline, not args as it might have signifiance space
     pattern = cmdline[6:].encode(cluster.defaults['character_encoding'])
-    for host in sorted(cluster.connections.keys()):
+    for host in cluster:
         job = cluster.last_result.get(host)
         if job:
             res = job.result
@@ -45,7 +45,7 @@ def star_match(cluster, logdir, cmdline, *args):
         def include_host(pattern, buffer):
             return pattern in buffer
     enable_list = []
-    for host in sorted(cluster.connections.keys()):
+    for host in cluster:
         job = cluster.last_result.get(host)
         if job:
             res = job.result
@@ -59,7 +59,7 @@ def star_error(cluster, logdir, cmdline, *args):
 
     enable_hosts = []
     specific_codes = [int(x) for x in args]
-    for host in sorted(cluster.connections.keys()):
+    for host in cluster:
         try:
             job = cluster.last_result[host]
             if job.completed:

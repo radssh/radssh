@@ -49,7 +49,7 @@ def lookup(label):
 def gender_lookup(cluster, logdir, cmd, *args):
     '''Lookup attributes/values for cluster hosts in genders database'''
     if not args:
-        args = sorted(cluster.connections.keys())
+        args = cluster
     g = genders.Genders(filename=genders_file)
     for host in args:
         print(host, ': ', end='')

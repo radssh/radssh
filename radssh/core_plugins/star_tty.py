@@ -59,7 +59,7 @@ def radssh_tty(cluster, logdir, cmd, *args):
     cols, lines = terminal_size()
     if not args:
         args = []
-        for k in sorted(cluster.connections.keys()):
+        for k in cluster:
             if k not in cluster.disabled:
                 args.append(str(k))
 
