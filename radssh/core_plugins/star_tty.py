@@ -23,21 +23,25 @@ import fcntl
 
 
 def posix_shell(chan, encoding='UTF-8'):
+    partial_buf = b''
     try:
-        chan.settimeout(0.0)
-
         while True:
-            r, w, e = select.select([chan, sys.stdin], [], [])
-            if chan in r:
+            r, w, e = select.select([chan, sys.stdin], [sys.stdout], [])
+            # Make sure we can read from socket and write to stdout...
+            if (chan in r) and (sys.stdout in w):
                 try:
                     x = chan.recv(1024)
                     if len(x) == 0:
                         sys.stdout.write('\r\n*** EOF ***\r\n')
                         break
-                    print(x.decode(encoding), end='')
+                    print((partial_buf + x).decode(encoding), end='')
                     sys.stdout.flush()
+                    partial_buf = b''
                 except socket.timeout:
                     pass
+                except UnicodeError:
+                    # Keep the bytes read to append to on next pass
+                    partial_buf += x
             if sys.stdin in r:
                 x = sys.stdin.read()
                 chan.send(x.encode(encoding))
