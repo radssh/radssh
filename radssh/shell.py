@@ -130,7 +130,7 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                             completions.append(str(k))
                             completion_time += job.end_time - job.start_time
                         else:
-                            failures.setdefault(v.return_code, []).append(k)
+                            failures.setdefault(v.return_code, []).append(str(k))
                     else:
                         failures.setdefault(None, []).append(str(k))
                 if failures:

@@ -25,6 +25,7 @@ Issues Fixed
  - StreamBuffer closing is no longer vulnerable to **Queue.Full** exception.
  - Fix thread contention issue when prompting user for passwords and accepting new host keys concurrently.
  - Ordered output mode fixed under Python3. [ Fixed in 1.1.1 ]
+ - Improve behavior when connection is dropped by server during authentication. [ Fixed in 1.1.1 ]
 
 Enhancements
 ============
@@ -51,6 +52,7 @@ Plugin Enhancements
  - Now supports shell alias definitions with escaped single quotes are supported.
  - **\*result** can include > and >> to save/append to local file [ Added in 1.1.1 ]
  - **\*history** added to alias plugin, with support for `!nnn` replay of command by history number [ Added in 1.1.1 ]
+ - **\*tty** should no longer be prone to "Resource temporarily unavailable" exceptions. [ Fixed in 1.1.1 ]
 
 API Changes
 ==========
