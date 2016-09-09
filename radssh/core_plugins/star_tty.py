@@ -26,17 +26,18 @@ def posix_shell(chan, encoding='UTF-8'):
     partial_buf = b''
     try:
         while True:
-            r, w, e = select.select([chan, sys.stdin], [sys.stdout], [])
-            # Make sure we can read from socket and write to stdout...
-            if (chan in r) and (sys.stdout in w):
+            r, w, e = select.select([chan, sys.stdin], [], [])
+            if (chan in r):
                 try:
                     x = chan.recv(1024)
-                    if len(x) == 0:
-                        sys.stdout.write('\r\n*** EOF ***\r\n')
-                        break
-                    print((partial_buf + x).decode(encoding), end='')
-                    sys.stdout.flush()
-                    partial_buf = b''
+                    r1, w1, e1 = select.select([], [sys.stdout], [])
+                    if (sys.stdout in w1):
+                        if len(x) == 0:
+                            sys.stdout.write('\r\n*** EOF ***\r\n')
+                            break
+                        print((partial_buf + x).decode(encoding), end='')
+                        sys.stdout.flush()
+                        partial_buf = b''
                 except socket.timeout:
                     pass
                 except UnicodeError:
