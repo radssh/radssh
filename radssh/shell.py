@@ -57,6 +57,23 @@ except ImportError:
 
     star = NullStarCommands()
 
+
+# Try using colorama when running on Windows
+if sys.platform.startswith('win'):
+    try:
+        import colorama
+        colorama.initialise.init()
+    except Exception as e:
+        print('Unable to support ANSI escape sequences via colorama module')
+        print(e)
+        sys.exit(1)
+
+# Ensure ~/.ssh directory exists, with sensible permissions
+try:
+    os.mkdir(os.path.expanduser('~/.ssh'), 0o700)
+except OSError:
+    pass
+
 ################################################################################
 
 command_listeners = []

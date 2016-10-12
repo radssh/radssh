@@ -51,6 +51,11 @@ os.chdir('radssh')
 pkg_data_files = [join('plugins', f) for f in listdir('plugins') if not f.endswith('.py') and isfile(join('plugins', f))]
 os.chdir(olddir)
 
+# Conditional requirements (colorama for Windows platform only)
+required_packages = ['paramiko', 'netaddr']
+if sys.platform.startswith('win'):
+    required_packages.append('colorama')
+
 setup(name='radssh',
       version=radssh.version,
       description='RadSSH Module',
@@ -76,7 +81,7 @@ setup(name='radssh',
           'Programming Language :: Python :: 3.5',
           'Topic :: System :: Shells',
           'Topic :: Utilities'],
-      packages=['radssh', 'radssh.plugins'],
+      packages=required_packages,
       package_data={'': pkg_data_files},
       install_requires=['paramiko', 'netaddr'],
       long_description='''
