@@ -81,9 +81,9 @@ setup(name='radssh',
           'Programming Language :: Python :: 3.5',
           'Topic :: System :: Shells',
           'Topic :: Utilities'],
-      packages=required_packages,
+      packages=['radssh', 'radssh.plugins'],
       package_data={'': pkg_data_files},
-      install_requires=['paramiko', 'netaddr'],
+      install_requires=required_packages,
       long_description='''
 RadSSH Package
 ==============
