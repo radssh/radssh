@@ -16,6 +16,12 @@ Installing from PyPI
 
 If you are installing to a virtual environment, be sure to activate the environment prior to running pip.
 
+Ubuntu needs some additional dependencies:
+``sudo apt-get install libssl-dev python-dev libffi-dev -y``
+
+CentOS requires additional depencies:
+``sudo yum install -y python-devel libffi-devel openssl-devel
+
 Run the command (with sudo, if needed): ``pip install radssh``
 
 This should download and install RadSSH from the internet, along with the dependency packages (as well as their own dependencies, etc.)
