@@ -3,7 +3,7 @@ RadSSH Programmer's Guide
 
 This is the documentation for the RadSSH API for Programmers.
 
-If you are developing in Python, and want to make use of RadSSH, start with this overview on how to get started. Familiarity of the behavior of the RadSSH Shell is beneficial, but not completely necessary. Basic understanding of SSH command line utilitie, as well as Python programming knowledge is expected.
+If you are developing in Python, and want to make use of RadSSH, start with this overview on how to get started. Familiarity of the behavior of the RadSSH Shell is beneficial, but not completely necessary. Basic understanding of SSH command line utilities, as well as Python programming knowledge is expected.
 
 The primary Python class provided by RadSSH is the Cluster object. A single Cluster object incorporates a number of SSH connections, a thread pool to handle parallel execution, a flexible mechanism to stream output from many hosts to the console, and a common logging facility. Typically, a single Cluster object is created and used for the duration of a session, however some applications can make use of multiple different Cluster objects at the same time. RadSSH does not impose specific limits on the size or number of Clusters that can be created, the upper limit is dependent on operating system resources (typically threads or maximum number of open files/sockets).
 
