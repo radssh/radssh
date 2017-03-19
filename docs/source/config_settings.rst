@@ -39,10 +39,10 @@ General Settings
 ----------------
  - username (default: **$SSH_USER** or **$USER**)
     Login name for establishing SSH sessions
- - loglevel (default: ERROR) 
+ - loglevel (default: ERROR)
     One of CRITICAL, ERROR, WARNING, INFO, DEBUG. The old **verbose** setting is now deprecated.
  - output_mode (default: stream)
-    **stream** will output lines of text to the console as they come in. **ordered** will preserve host ordering, which may give the appearance of disrupting parallelism on commands with lengthy output. **off** turns off console output while commands are running, but does not affect file logging of output. Can be changed within the shell via the **\*output** command.
+    **stream** will output lines of text to the console as they come in. **ordered** will preserve host ordering, which may give the appearance of disrupting parallelism on commands with lengthy output. **grouped** ensures completed output per host, without interleaving lines. **off** turns off console output while commands are running, but does not affect file logging of output. Can be changed within the shell via the **\*output** command.
  - max_threads (default: 120)
     Limit RadSSH processing threads. Independent of the baseline 1 thread per SSH connection overhead.
  - shell.console (default: color)

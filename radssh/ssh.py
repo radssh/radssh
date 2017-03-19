@@ -789,6 +789,13 @@ class Cluster(object):
                                     self.console.q.put(((host, False), '[No Output]'))
                                 if job.result.stderr:
                                     self.console.q.put(((host, True), job.result.stderr.decode(self.defaults['character_encoding'])))
+                        elif self.output_mode == 'grouped':
+                            # Send output to console in entirety when jobs complete on hosts.
+                            # Don't include placeholder [No Output] as in ordered mode.
+                            if summary.result.stdout:
+                                self.console.q.put(((host, False), summary.result.stdout.decode(self.defaults['character_encoding'])))
+                            if summary.result.stderr:
+                                self.console.q.put(((host, True), summary.result.stderr.decode(self.defaults['character_encoding'])))
                         else:
                             ordered_list.remove(host)
                         self.console.status('Completed on %d/%d hosts' % (len(result), total))

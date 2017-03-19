@@ -64,7 +64,7 @@ log_err=err.log
 # Command line history file, saved across sessions
 historyfile=~/.radssh_history
 
-# Available modes: {stream, ordered, off}
+# Available modes: {stream, ordered, grouped, off}
 output_mode=stream
 # Can override character encoding (will use sys.stdout.encoding if not specified)
 # character_encoding=UTF-8

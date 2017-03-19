@@ -253,7 +253,7 @@ def star_forward(cluster, logdir, cmdline, *args):
 
 def star_output_mode(cluster, logdir, cmdline, *args):
     '''Select output mode: [stream|ordered|off]'''
-    modes = ('stream', 'ordered', 'off')
+    modes = ('stream', 'ordered', 'grouped', 'off')
     if args[0] not in modes:
         raise ValueError('Output mode must be one of: %s' % repr(modes))
     cluster.output_mode = args[0]
