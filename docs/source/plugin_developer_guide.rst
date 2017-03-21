@@ -26,7 +26,7 @@ The plugin "special" names are:
      *  **plugins** - Python dict object of loaded plugin modules, indexed by module name
      *  **star_commands** - Python dict object of StarCommands
      *  **shell** - The RadSSH shell invocation function itself
-    
+
   All but the shell object are mutable; use extreme caution if you attempt to alter them. When in doubt, treat them as read-only.
 
   If your plugin has no need to read (or update) these objects, and does not require any runtime initialization steps, you do not need to define an **init** function.
@@ -35,7 +35,7 @@ The plugin "special" names are:
 
   When returning an iterator, the iterator should produce 3-tuples or the form (label, hostname, socket). The label should be a string, which is used for labeling the console output, as well as the logfile(s) associated with the host. It is not required for the label to be a resolvable hostname or IP address. The hostname element of the tuple should be an actual hostname or IP address that can be used as a destination for connecting a socket. It may include a port specifier, if the connection destination is not the default SSH port (22); use the form "hostname:port" if needed. The socket element of the tuple, under normal circumstances should be None, in which case the shell will establish the socket connection using the hostname (and possibly port) passed back in the previous tuple element. If the host can not be connected to by a plain socket connection, perhaps needing some firewall/proxy/port-knock manipulation, then it is the responsibility of the plugin to perform these steps and open the socket connection, passing the open socket object back via the iterator
 
- * **command_listener** - A Python function that takes a single argument (command_line). The plugin is notified of each command line content from the shell, just prior to execution. Informative only.
+ * **command_listener** - A Python function that takes a single required argument (command_line) and an optional boolean (lookup). The plugin is notified of each command line content from the shell, just prior to execution. This function **may** pass back a translated command to substitute in place of the supplied command when lookup is `False`. If lookup is `True`, the function is expected to pass back a list of applicable tab-completions that match the command line passed in.
 
 
  * **star_commands** - A Python dict object, with strings of the form ``*command`` as keys, and values of StarCommand class objects (plain functions will be converted to default StarCommand instances). This dict handles the mapping of ``*command`` to the underlying callable function that will be invoked by the shell. A plugin module can define and implement multiple ``*commands`` in the dict object.
@@ -51,5 +51,3 @@ The ``*command`` handler function itself will be passed in the following argumen
  * **logdir** - the path to the RadSSH Shell session specific logging directory.
  * **command_line** - the text input as the command line (with spaces preserved)
  * **\*args** - The (space delimited) split of command line arguments
-
-

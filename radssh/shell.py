@@ -188,7 +188,7 @@ class radssh_tab_handler(object):
         else:
             return self.completion_choices[state][1:]
 
-    def complete_executable(self, lead_in, text, state):
+    def complete_executable(self, text, state):
         if state == 0:
             del self.completion_choices[:]
             for path_dir in os.environ['PATH'].split(os.path.pathsep):
@@ -204,6 +204,10 @@ class radssh_tab_handler(object):
                             continue
                 except OSError as e:
                     continue
+            for plug in command_listeners:
+                choices = plug(text, True)
+                if choices:
+                    self.completion_choices.extend(choices)
             self.completion_choices.append(None)
         return self.completion_choices[state]
 
@@ -271,6 +275,9 @@ class radssh_tab_handler(object):
             if lead_in.startswith('*'):
                 # User needs help completing *command...
                 return self.complete_star_command(lead_in, text, state)
+            elif lead_in == buffer:
+                # First word - complete as command or alias...
+                return self.complete_executable(text, state)
             else:
                 # Default behavior - remote file path completion
                 return self.complete_remote_path(lead_in, text, state)

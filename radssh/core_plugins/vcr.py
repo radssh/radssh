@@ -55,9 +55,9 @@ class Recorder(object):
                 f.write(pprint.pformat(self.vars))
 
 
-def command_listener(cmd):
+def command_listener(cmd, lookup=False):
     global vcr
-    if vcr:
+    if vcr and not lookup:
         args = cmd.split()
         if args and not args[0] in star_commands:
             vcr.feed(cmd)

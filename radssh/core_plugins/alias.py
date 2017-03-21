@@ -64,11 +64,15 @@ def init(**kwargs):
             aliases[name] = value.strip()[1:-1].replace("'\\''", "'")
 
 
-def command_listener(cmd):
+def command_listener(cmd, lookup=False):
     '''Handle alias replacement, along with crude !! and !$'''
     global last_command
     new_cmd = cmd
     words = cmd.split()
+    if lookup:
+        # Support alias tab-completion
+        return [x for x in aliases if x.startswith(cmd)]
+
     if not words:
         return None
     if '!!' in words:
