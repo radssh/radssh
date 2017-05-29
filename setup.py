@@ -54,7 +54,7 @@ os.chdir(olddir)
 # Conditional requirements (colorama for Windows platform only)
 required_packages = ['paramiko', 'netaddr']
 if sys.platform.startswith('win'):
-    required_packages.append('colorama')
+    required_packages.append('colorama>=0.3.9')
 
 setup(name='radssh',
       version=radssh.version,
