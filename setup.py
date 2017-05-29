@@ -55,6 +55,7 @@ os.chdir(olddir)
 required_packages = ['paramiko', 'netaddr']
 if sys.platform.startswith('win'):
     required_packages.append('colorama>=0.3.9')
+    required_packages.append('pyreadline')
 
 setup(name='radssh',
       version=radssh.version,
@@ -72,6 +73,8 @@ setup(name='radssh',
           'Intended Audience :: Developers',
           'License :: OSI Approved :: BSD License',
           'Operating System :: POSIX',
+          'Operating System :: Microsoft :: Windows',
+          'Operating System :: MacOS :: MacOS X',
           'Programming Language :: Python :: 2',
           'Programming Language :: Python :: 2.6',
           'Programming Language :: Python :: 2.7',
@@ -79,6 +82,7 @@ setup(name='radssh',
           'Programming Language :: Python :: 3.3',
           'Programming Language :: Python :: 3.4',
           'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.6',
           'Topic :: System :: Shells',
           'Topic :: Utilities'],
       packages=['radssh', 'radssh.plugins'],
