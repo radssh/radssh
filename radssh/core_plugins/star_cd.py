@@ -13,6 +13,7 @@ import os
 
 curr_dir = ''
 
+
 def star_cd(cluster, logdir, cmd, *args):
     '''global chdir (prepends to all cmds)'''
     global curr_dir
@@ -24,8 +25,9 @@ def star_cd(cluster, logdir, cmd, *args):
         return
     curr_dir = os.path.join(curr_dir, args[0])
 
+
 def command_listener(cmd):
     if (curr_dir and cmd and cmd[0] != '*'):
-        return 'cd %s ; %s' %(curr_dir, cmd)
+        return 'cd %s ; %s' % (curr_dir, cmd)
 
 star_commands = {'*cd': star_cd}

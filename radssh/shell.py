@@ -84,7 +84,8 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                 for feed in command_listeners:
                     feed_result = feed(cmd)
                     if feed_result:
-                        cluster.console.message('Command modified from "%s" to "%s"' % (cmd, feed_result))
+                        if defaults['show_altered_commands'] == 'on':
+                            cluster.console.message('Command modified from "%s" to "%s"' % (cmd, feed_result))
                         cmd = str(feed_result)
                 if logdir:
                     with open(os.path.join(logdir, 'session.commands'), 'a') as f:
