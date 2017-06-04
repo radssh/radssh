@@ -93,10 +93,11 @@ Allow VCR-style recording and playing back commands from a session.
 
 Miscellaneous StarCommands
 --------------------------
+\*cd [directory]
+  Have RadSSH keep track of the specified directory as the preferred "current" directory for all subsequent command invocations. Typically, each invoked command is executed in an independent session, which resets the current directory to the user home directory as a default. This plugin provides a handy way to keep track of the preferred working directory to set prior to each command invocation. Use **\*cd** with no parameters to reset back to default (no chosen directory).
+
 \*tty [host] ...
   Sequentially invoke TTY sessions on select hosts (or entire cluster, if no hosts listed). Useful for when a fully interactive shell session is required. Since this utilized the established authenticated SSH connections, it avoids the overhead of reestablishing the connections.
 
 \*banner
   Print the SSH signon banner received from each enabled host. For brevity, this information is not printed during signon, but is made viewable via this command.
-
-
