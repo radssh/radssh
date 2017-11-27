@@ -414,7 +414,20 @@ def radssh_shell_main():
 
     # Create a RadSSHConsole instance for screen output
     job_buffer = int(defaults['stalled_job_buffer'])
-    if defaults['shell.console'] != 'color' or not sys.stdout.isatty():
+    if '.' in defaults['shell.console']:
+        # Try finding formatter as module.function from loaded plugins
+        logger.info('Attempting to load custom console formatter: %s', defaults['shell.console'])
+        module_name, function_name = defaults['shell.console'].split('.', 1)
+        try:
+            custom_formatter = getattr(loaded_plugins[module_name], function_name)
+            console = RadSSHConsole(formatter=custom_formatter, retain_recent=job_buffer)
+        except KeyError:
+            logger.error('Plugin not loaded for shell.console formatter %s', defaults['shell.console'])
+        except AttributeError:
+            logger.error('Plugin formatter not found for shell.console formatter %s', defaults['shell.console'])
+        except Exception as e:
+            logger.error('Exception on console formatter %s: %r', defaults['shell.console'], e)
+    elif defaults['shell.console'] != 'color' or not sys.stdout.isatty():
         console = RadSSHConsole(formatter=monochrome, retain_recent=job_buffer)
     else:
         console = RadSSHConsole(retain_recent=job_buffer)

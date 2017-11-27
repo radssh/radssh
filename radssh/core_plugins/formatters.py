@@ -18,6 +18,7 @@ import struct
 # Grab a broad range of colors that avoid the muddled dark on dark contrast
 palette = list(range(20, 230))
 
+
 def ansi256(tag, text):
     '''ANSI 256 colorized output with semi-restricted palette'''
     label, hilight = tag
@@ -45,11 +46,12 @@ def ansi256_rj(tag, text):
 
 def ip_hash(hstr0):
     '''Improved hashing when dealing with consecutive IP addresses'''
-    hstr1 = re.sub('[^0-9]','.', hstr0)
-    hstr2 = hstr1.replace(".","0")
+    hstr1 = re.sub('[^0-9]', '.', hstr0)
+    hstr2 = hstr1.replace(".", "0")
     hstr = hstr2[-3:]
     hval = int(hstr)
     return hval
+
 
 def ip_colorizer(tag, text):
     '''Alternative ANSI colorized output - ensure that IP address ranges cycle colors more uniformly'''
