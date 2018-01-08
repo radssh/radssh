@@ -49,13 +49,13 @@ def init(**kwargs):
     '''Use subprocess to get shell to source a likely alias defining file'''
     cmd = None
     if os.path.exists(os.path.expanduser('~/.bash_profile')):
-        cmd = ['bash', '-c',
+        cmd = ['bash', '-ic',
                'source ~/.bash_profile; alias| sed -e \'s/^alias //\'']
     elif os.path.exists(os.path.expanduser('~/.bashrc')):
-        cmd = ['bash', '-c',
+        cmd = ['bash', '-ic',
                'source ~/.bashrc; alias| sed -e \'s/^alias //\'']
     elif os.path.exists(os.path.expanduser('~/.profile')):
-        cmd = ['sh', '-c', 'source ~/.profile; alias']
+        cmd = ['sh', '-ic', '. ~/.profile; alias']
     if cmd:
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         p.wait()
