@@ -193,6 +193,12 @@ def main(args):
     All other command line arguments will be attempted to be used as
     plaintext or base64-encoded ciphertext for encrypt/decrypt calls.
     '''
+    import sys
+    if len(sys.argv) == 0:
+        print(__doc__)
+        print(main.__doc__)
+        sys.exit(0)
+
     encoding_mode = True
     pkcs = PKCS_OAEP()
     print('Using RSA keyfile: [%s]' % pkcs.keyfile)
@@ -215,9 +221,4 @@ def main(args):
             print('[%s] -> [%s]' % (x, result))
 
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) > 1:
-        main(sys.argv[1:])
-    else:
-        print(__doc__)
-        print(main.__doc__)
+    main()

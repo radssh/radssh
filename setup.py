@@ -45,6 +45,18 @@ for p, d, f in os.walk('radssh'):
             if not plugin.endswith('.pyc'):
                 shutil.copy2(os.path.join(p, plugin), 'radssh/plugins')
 
+
+# Script entry points
+entry_points = {
+	'console_scripts': [
+        'radssh=radssh.shell:radssh_shell_main',
+		'radpkcs=radssh.pkcs:main',
+        'radinfo=radssh.__main__:radinfo',
+        'radplugins=radssh.plugins:main'
+    ]
+}
+
+
 # Get list of non .py files in plugins directory to include as pkg_data
 olddir = os.getcwd()
 os.chdir('radssh')
@@ -79,6 +91,7 @@ setup(name='radssh',
       packages=['radssh', 'radssh.plugins'],
       package_data={'': pkg_data_files},
       install_requires=['paramiko', 'netaddr'],
+      entry_points = entry_points,
       long_description='''
 RadSSH Package
 ==============

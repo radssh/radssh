@@ -66,7 +66,7 @@ def start_thread(event):
     return t
 
 
-if __name__ == '__main__':
+def radinfo():
     print('RadSSH Main Module')
     print('Package RadSSH %s from (%s)' % (radssh.version, radssh.__file__))
     # Dependent modules - Print version and location
@@ -117,3 +117,7 @@ if __name__ == '__main__':
         while lim:
             lim.pop().join()
     print('End of runtime check')
+
+
+if __name__ == '__main__':
+    radinfo()
