@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2017, 2018 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #

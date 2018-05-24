@@ -1,3 +1,14 @@
+#
+# Copyright (c) 2018 LexisNexis Risk Data Management Inc.
+#
+# This file is part of the RadSSH software package.
+#
+# RadSSH is free software, released under the Revised BSD License.
+# You are permitted to use, modify, and redsitribute this software
+# according to the Revised BSD License, a copy of which should be
+# included with the distribution as file LICENSE.txt
+#
+
 '''
 Customizable RadSSH Console formatter module:
 Allow plugins to provide formatter function(s) to supplement the

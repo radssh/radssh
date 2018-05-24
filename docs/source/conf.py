@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'RadSSH'
-copyright = u'2014, 2016 Paul Kapp'
+copyright = u'2014, 2016, 2018 Paul Kapp'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
