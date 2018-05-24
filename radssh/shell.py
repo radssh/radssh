@@ -280,6 +280,25 @@ class radssh_tab_handler(object):
 
 
 ################################################################################
+# Workaround for https://github.com/radssh/radssh/issues/32
+# Newer GNU Readline library raise false errno value that the Python
+# wrapper reraises as IOError. https://bugs.python.org/issue10350 not
+# being backported to Python 2.7, so handle it with more code...
+def safe_write_history_file(filename):
+    # To avoid false negative, use stat() to test the file modification times
+    try:
+        readline.write_history_file(filename)
+    except IOError as e:
+        # Ignore this exception if we wrote out the history file recently
+        try:
+            post = os.stat(filename).st_mtime
+            if post > time.time() - 3:
+                logging.debug('Ignoring "%s" writing history file', str(e))
+        except Exception:
+            raise e
+
+
+################################################################################
 
 def radssh_shell_main():
     args = sys.argv[1:]
@@ -445,7 +464,11 @@ def radssh_shell_main():
         except IOError:
             pass
         readline.set_history_length(int(os.environ.get('HISTSIZE', 1000)))
-        atexit.register(readline.write_history_file, histfile)
+        if sys.version_info.major == 2:
+            # Workaround #32 - fix not backported to Python 2.X
+            atexit.register(safe_write_history_file, histfile)
+        else:
+            atexit.register(readline.write_history_file, histfile)
 
     # Add TAB completion for *commands and remote file paths
     tab_completion = radssh_tab_handler(cluster, star)
