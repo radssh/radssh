@@ -16,11 +16,16 @@ Installing from PyPI
 
 If you are installing to a virtual environment, be sure to activate the environment prior to running pip.
 
-Ubuntu needs some additional dependencies:
-``sudo apt-get install libssl-dev python-dev libffi-dev -y``
+The python modules required for RadSSH will be installed by `pip` if they are not already present. Due to the upgrade of Paramiko's back end cryptography library, this may add some extra complexity to get all the necessary dependencies installed. The simplest way to avoid potential issues is to use your distributions own package manager (yum/apt/dnf) to pre-install paramiko (or python-paramiko) before installing RadSSH via `pip`.
 
-CentOS requires additional depencies:
-``sudo yum install -y python-devel libffi-devel openssl-devel
+Alternatively, attempt to install the Paramiko dependency Cryptography using ``pip install cryptography``. If it is able to install via the python prebuilt binary wheel package, that reduces a major source of complexity. See this `StackOverflow https://stackoverflow.com/questions/22073516/failed-to-install-python-cryptography-package-with-pip-and-setup-py` topic for additional details, and suggested solutions.
+
+If you must resort to installation and compiling/linking from source, use your distribution package manager to install the core compilation packages:
+ - Ubuntu needs some additional dependencies:
+ ``sudo apt-get install libssl-dev python-dev libffi-dev -y``
+
+ - CentOS requires additional depencies:
+ ``sudo yum install -y python-devel libffi-devel openssl-devel``
 
 Run the command (with sudo, if needed): ``pip install radssh``
 
