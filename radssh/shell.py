@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2014, 2016 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -57,6 +57,23 @@ except ImportError:
 
     star = NullStarCommands()
 
+
+# Try using colorama when running on Windows
+if sys.platform.startswith('win'):
+    try:
+        import colorama
+        colorama.initialise.init()
+    except Exception as e:
+        print('Unable to support ANSI escape sequences via colorama module')
+        print(e)
+        sys.exit(1)
+
+# Ensure ~/.ssh directory exists, with sensible permissions
+try:
+    os.mkdir(os.path.expanduser('~/.ssh'), 0o700)
+except OSError:
+    pass
+
 ################################################################################
 
 command_listeners = []
@@ -84,7 +101,8 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                 for feed in command_listeners:
                     feed_result = feed(cmd)
                     if feed_result:
-                        cluster.console.message('Command modified from "%s" to "%s"' % (cmd, feed_result))
+                        if defaults['show_altered_commands'] == 'on':
+                            cluster.console.message('Command modified from "%s" to "%s"' % (cmd, feed_result))
                         cmd = str(feed_result)
                 if logdir:
                     with open(os.path.join(logdir, 'session.commands'), 'a') as f:
@@ -279,6 +297,25 @@ class radssh_tab_handler(object):
 
 
 ################################################################################
+# Workaround for https://github.com/radssh/radssh/issues/32
+# Newer GNU Readline library raise false errno value that the Python
+# wrapper reraises as IOError. https://bugs.python.org/issue10350 not
+# being backported to Python 2.7, so handle it with more code...
+def safe_write_history_file(filename):
+    # To avoid false negative, use stat() to test the file modification times
+    try:
+        readline.write_history_file(filename)
+    except IOError as e:
+        # Ignore this exception if we wrote out the history file recently
+        try:
+            post = os.stat(filename).st_mtime
+            if post > time.time() - 3:
+                logging.debug('Ignoring "%s" writing history file', str(e))
+        except Exception:
+            raise e
+
+
+################################################################################
 
 def radssh_shell_main():
     args = sys.argv[1:]
@@ -413,7 +450,20 @@ def radssh_shell_main():
 
     # Create a RadSSHConsole instance for screen output
     job_buffer = int(defaults['stalled_job_buffer'])
-    if defaults['shell.console'] != 'color' or not sys.stdout.isatty():
+    if '.' in defaults['shell.console']:
+        # Try finding formatter as module.function from loaded plugins
+        logger.info('Attempting to load custom console formatter: %s', defaults['shell.console'])
+        module_name, function_name = defaults['shell.console'].split('.', 1)
+        try:
+            custom_formatter = getattr(loaded_plugins[module_name], function_name)
+            console = RadSSHConsole(formatter=custom_formatter, retain_recent=job_buffer)
+        except KeyError:
+            logger.error('Plugin not loaded for shell.console formatter %s', defaults['shell.console'])
+        except AttributeError:
+            logger.error('Plugin formatter not found for shell.console formatter %s', defaults['shell.console'])
+        except Exception as e:
+            logger.error('Exception on console formatter %s: %r', defaults['shell.console'], e)
+    elif defaults['shell.console'] != 'color' or not sys.stdout.isatty():
         console = RadSSHConsole(formatter=monochrome, retain_recent=job_buffer)
     else:
         console = RadSSHConsole(retain_recent=job_buffer)
@@ -444,7 +494,11 @@ def radssh_shell_main():
         except IOError:
             pass
         readline.set_history_length(int(os.environ.get('HISTSIZE', 1000)))
-        atexit.register(readline.write_history_file, histfile)
+        if sys.version_info.major == 2:
+            # Workaround #32 - fix not backported to Python 2.X
+            atexit.register(safe_write_history_file, histfile)
+        else:
+            atexit.register(readline.write_history_file, histfile)
 
     # Add TAB completion for *commands and remote file paths
     tab_completion = radssh_tab_handler(cluster, star)

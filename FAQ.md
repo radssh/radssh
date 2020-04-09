@@ -18,9 +18,9 @@ RadSSH Project
 
 #. Does RadSSH work on Windows systems?
 
-   Not currently, but it is being pursued for a future release. RadSSH can run on just about any Linux distribution, as well as recent Macintosh OS X releases. It has only been tested on Windows to the point of revealing that some non-trivial code changes are needed to support Windows and/or Cygwin.
-
-   If you cannot install RadSSH on one of the SSH destination hosts that you connect to from Windows, a virtual machine installation of a Linux distribution can be used.
+   YES! Starting with release 1.1.2, RadSSH should be fully compatible with Windows. Using the **colorama** module, the console formatting is now compatible with
+   windows console output. Additionally, the conditional dependency on **pyreadline** handles the command line input and editing features already available
+   on Linux and Mac OSX consoles.
 
 #. What remote hosts can RadSSH connect to?
 
@@ -61,7 +61,7 @@ RadSSH Shell
    If you need to enter your own password in order to invoke sudo, you are currently out of luck. RadSSH is not currently able to handle interactive prompting. See if the sudo configuration option NOPASSWD is available.
 
    Most sudo configurations also, by default, require a TTY, which is also not established for RadSSH connections. Running commands with **sudo** under RadSSH requires both NOPASSWD and !requiretty.
-   
+
 #. I keep getting "Unable to verify host key" messages, and can't connect to hosts. Why is this?
 
    By default, RadSSH will not interact with hosts that are not already known and trusted. SSH command line clients use ~/.ssh/known_hosts to keep a record of hosts with verified and trusted keys. If RadSSH refuses to communicate with a host, make sure that you can connect with your normal ssh client. You can also turn on automatic accepting of host keys with **--hostkey.verify=accept_new**, which sacrifices some security in exchange for some convenience.

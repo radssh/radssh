@@ -1,5 +1,12 @@
 Features
 ==========
+
+ - Windows platform is now supported as of 1.1.2
+
+ - Plugins can now supply custom console formatters. Set config option to "<plugin>.<formatter>" to enable it within radssh.shell.  See formatter.py for examples. (Thanks to Mark Kelly for inspiration) [ Added in 1.1.2 ]
+
+ - New plugin: **\*cd** to mimic a persistent change of current working directory [ Added in 1.1.2 ]
+
  - New module for host key handling and validation, closer to the functionality of OpenSSH. Significantly improved performance when operating with very large known_hosts files.
 
  - Now relies on standard OpenSSH config file settings for options related to connection, host key validation, and user authentiction. Many, but not all options are supported.
@@ -26,6 +33,8 @@ Issues Fixed
  - Fix thread contention issue when prompting user for passwords and accepting new host keys concurrently.
  - Ordered output mode fixed under Python3. [ Fixed in 1.1.1 ]
  - Improve behavior when connection is dropped by server during authentication. [ Fixed in 1.1.1 ]
+ - Fix CPU usage when using **\*tty** (#25 Thanks to Mark Kelly for report & fix) [ Fixed in 1.1.2 ]
+ - Fix crash during saving of session command history (#32 Thanks to Russell Wagner for report)
 
 Enhancements
 ============
@@ -42,6 +51,8 @@ Enhancements
     ssh_agent|IdentitiesOnly
 
  - Added new config option **ssh_config** to allow overriding the default location of the user SSH Config file (~/.ssh/config).
+ - `~/.ssh` directory will be created at startup, if it does not exist. [ Fixed in 1.1.2 ]
+ - Added new config option **show_altered_commands** (default: off)
 
 
 Plugin Enhancements
@@ -53,6 +64,7 @@ Plugin Enhancements
  - **\*result** can include > and >> to save/append to local file [ Added in 1.1.1 ]
  - **\*history** added to alias plugin, with support for `!nnn` replay of command by history number [ Added in 1.1.1 ]
  - **\*tty** should no longer be prone to "Resource temporarily unavailable" exceptions. [ Fixed in 1.1.1 ]
+ - **\*sftp** now silently ignores `chown` errors
 
 API Changes
 ==========

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -406,8 +406,11 @@ def sftp_thread(host, t, srcfile, dstfile=None, attrs=None):
     if not dstfile:
         dstfile = srcfile
     s.put(srcfile, dstfile)
-    s.chown(dstfile, attrs.st_uid, attrs.st_gid)
     s.chmod(dstfile, attrs.st_mode % 4096)
+    try:
+        s.chown(dstfile, attrs.st_uid, attrs.st_gid)
+    except IOError:
+        pass
     s.close()
     return CommandResult(command='SFTP %s -> %s' % (srcfile, dstfile),
                          return_code=0, status='*** Complete ***',

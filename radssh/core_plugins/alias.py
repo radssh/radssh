@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -49,13 +49,13 @@ def init(**kwargs):
     '''Use subprocess to get shell to source a likely alias defining file'''
     cmd = None
     if os.path.exists(os.path.expanduser('~/.bash_profile')):
-        cmd = ['bash', '-c',
+        cmd = ['bash', '-ic',
                'source ~/.bash_profile; alias| sed -e \'s/^alias //\'']
     elif os.path.exists(os.path.expanduser('~/.bashrc')):
-        cmd = ['bash', '-c',
+        cmd = ['bash', '-ic',
                'source ~/.bashrc; alias| sed -e \'s/^alias //\'']
     elif os.path.exists(os.path.expanduser('~/.profile')):
-        cmd = ['sh', '-c', 'source ~/.profile; alias']
+        cmd = ['sh', '-ic', '. ~/.profile; alias']
     if cmd:
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         p.wait()
