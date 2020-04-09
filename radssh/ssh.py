@@ -66,7 +66,7 @@ sshconfig_loglevels = {
 
 def filter_tty_attrs(line):
     '''Handle the attributes for colors, etc.'''
-    return FILTER_TTY_ATTRS_RE.sub('', line)
+    return FILTER_TTY_ATTRS_RE.sub(b'', line)
 
 
 class Quota(object):
