@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -17,8 +17,6 @@ Runnable via ```python -m radssh.plugins```
 
 Utility program to install or list available plugins.
 '''
-
-from __future__ import print_function
 
 import sys
 import os

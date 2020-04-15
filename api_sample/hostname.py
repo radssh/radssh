@@ -16,9 +16,6 @@ This can be used as a template for developing customized scripts
 that leverage RadSSH, if the general purpose radssh.shell module
 is too interactive.
 '''
-from __future__ import print_function  # Requires Python 2.6 or higher
-
-
 import sys
 import socket
 import syslog

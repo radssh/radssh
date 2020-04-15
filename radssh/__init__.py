@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -13,9 +13,7 @@
 RadSSH - SSH parallel pseudo-shell and toolkit
 '''
 
-from __future__ import print_function  # Requires Python 2.6 or higher
-
-version_info = (1, 1, 2)
+version_info = (1, 3, 0)
 version = '.'.join([str(x) for x in version_info])
 
 __author__ = 'Paul Kapp'

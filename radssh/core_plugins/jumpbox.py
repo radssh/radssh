@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -8,7 +8,6 @@
 # according to the Revised BSD License, a copy of which should be
 # included with the distribution as file LICENSE.txt
 #
-
 '''Jumpbox support - allow connections to be made through paramiko connections via tunneling'''
 import paramiko
 import getpass
@@ -60,7 +59,7 @@ def add_jumpbox(host):
         while not t.is_authenticated() and retries > 0:
             # Try interactive password authentication
             print('Failed to authenticate to Jumpbox (%s)' % host)
-            jb_user = raw_input('Enter username for [%s]: ' % host)
+            jb_user = input('Enter username for [%s]: ' % host)
             jb_passwd = getpass.getpass('Enter password for %s@%s: ' % (jb_user, host))
             reauth = AuthManager(jb_user, auth_file=None, include_agent=False,
                                  include_userkeys=False, default_password=jb_passwd)

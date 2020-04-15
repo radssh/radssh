@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -21,8 +21,6 @@ Usage: ```python -m radssh.shell host [...]```
 Will read settings from /etc/radssh_config, and supplement with ~/.radssh_config.
 Settings may also be provided on the command line, using the form --keyword=value.
 '''
-from __future__ import print_function  # Requires Python 2.6 or higher
-
 
 import sys
 import os
@@ -93,7 +91,7 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                     break
             else:
                 try:
-                    cmd = raw_input('%s ' % defaults['shell.prompt'])
+                    cmd = input('%s ' % defaults['shell.prompt'])
                 except KeyboardInterrupt:
                     print('\n<Ctrl-C> during input\nUse EOF (<Ctrl-D>) or *exit to exit shell\n')
                     continue
@@ -121,7 +119,7 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                     print('and requires explicit confirmation before running.')
                     print('Please double check all parameters, just to be sure...')
                     print('   >>>', cmd)
-                    confirm = raw_input('Enter \'100%\' if completely sure: ')
+                    confirm = input('Enter \'100%\' if completely sure: ')
                     if confirm != '100%':
                         continue
                 if args[0].startswith('#'):
@@ -411,7 +409,7 @@ def radssh_shell_main():
                         pass
                 except AttributeError:
                     pass
-        connect_list = raw_input('Enter a list of connection destinations: ').split()
+        connect_list = input('Enter a list of connection destinations: ').split()
     else:
         connect_list = args
 

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -21,8 +21,6 @@ to a method mapped via a dict of star_commands.
 This dict can be extended via plugins. This module provides the core
 collection of *commands.
 '''
-from __future__ import print_function  # Requires Python 2.6 or higher
-
 
 import os
 import socket
@@ -297,7 +295,7 @@ def star_vars(cluster, logdir, cmdline, *args):
             print('%s is currently set to [%s]' % (args[0], cluster.user_vars[args[0]]))
         else:
             print('%s is currently not set' % args[0])
-        cluster.user_vars[args[0]] = raw_input('Enter new setting for "%s" : ' % args[0])
+        cluster.user_vars[args[0]] = input('Enter new setting for "%s" : ' % args[0])
 
 
 def star_chunk(cluster, logdir, cmdline, *args):

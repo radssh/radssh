@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -16,12 +16,8 @@ typically newline delimited, into a python queue object. Pushed
 data is acculumulated and delivered to the queue per selectable
 thresholds.
 '''
-from __future__ import print_function  # Requires Python 2.6 or higher
 
-try:
-    import queue
-except ImportError:
-    import Queue as queue
+import queue
 
 
 class StreamBuffer(object):
@@ -137,7 +133,7 @@ if __name__ == '__main__':
     b = StreamBuffer(q, tag='TestMode:', blocksize=20, presplit=True, encoding='utf-8')
     print(b)
     b.push(b'one\ntwo\nthree\nfour')
-    b.push(u' - \u2119\u01b4\u2602\u210c\u00f8\u1f24')
+    b.push(' - \u2119\u01b4\u2602\u210c\u00f8\u1f24')
     try:
         while True:
             tag, text = q.get(block=False)

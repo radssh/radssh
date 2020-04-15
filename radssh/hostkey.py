@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -10,8 +10,6 @@
 #
 
 '''HostKey Handling Module'''
-from __future__ import print_function  # Requires Python 2.6 or higher
-
 
 import os
 import threading
@@ -120,7 +118,7 @@ class HostKeyVerifier(object):
             if self.mode == verify_mode.prompt:
                 print('Unverified connection to "%s"' % lookup_name)
                 print('(Host Key Fingerprint [%s])' % actual)
-                answer = raw_input('Do you want to accept this key? (y/N): ')
+                answer = input('Do you want to accept this key? (y/N): ')
                 if answer[0].upper() == 'Y':
                     accept_and_add = True
             if self.mode in (verify_mode.accept_new, verify_mode.overwrite_blindly):

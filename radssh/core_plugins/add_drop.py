@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -12,8 +12,6 @@
 '''Add/Drop plugin for RadSSH - Add or drop connection from the cluster list'''
 # Give user the ability to add or drop connections from the working
 # set of cluster connections.
-
-from __future__ import print_function  # Requires Python 2.6 or higher
 
 import paramiko
 import radssh.ssh as ssh

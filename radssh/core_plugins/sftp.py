@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -33,9 +33,6 @@ structured in an easy to use fashion.
     cluster.sftp() call is used to put the file. File attributes for file
     permissions and user/group ownership is attempted to be preserved.
 '''
-
-from __future__ import print_function  # Requires Python 2.6 or higher
-
 
 import os
 import stat

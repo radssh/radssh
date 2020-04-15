@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -85,8 +85,6 @@ create, update, read, delete files in the log directory. It can also create a ne
 Cluster object and pass it back as a return value, which will cause RadSSH to
 shift context to the new cluster for the remainder of the session.
 '''
-
-from __future__ import print_function
 
 import imp
 import os

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -22,7 +22,7 @@ def push_key(cluster, logdir, cmd, *args):
     '''Use RadSSH facility to push out a public key into ~/.ssh/authorized_keys'''
     if not args:
         # prompt for key file
-        keyfile = raw_input('Enter location of PRIVATE key [~/.ssh/id_rsa]: ')
+        keyfile = input('Enter location of PRIVATE key [~/.ssh/id_rsa]: ')
         if not keyfile:
             keyfile = '~/.ssh/id_rsa'
     else:

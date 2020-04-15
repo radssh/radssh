@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -22,8 +22,6 @@ threads and open file handles for the runtime environment. These two limits
 factor into the maximum number of simultaneous connections that RadSSH
 can manage.
 '''
-from __future__ import print_function  # Requires Python 2.6 or higher
-
 import os
 import sys
 import time
@@ -88,7 +86,7 @@ if __name__ == '__main__':
     lim = []
     t0 = time.time()
     try:
-        for x in xrange(10000):
+        for x in range(10000):
             lim.append(open_file(os.devnull))
     except Exception as e:
         print('  System is able to open a maximum of %d concurrent files' % len(lim))
@@ -103,7 +101,7 @@ if __name__ == '__main__':
     t0 = time.time()
     kill_threads = threading.Event()
     try:
-        for x in xrange(10000):
+        for x in range(10000):
             lim.append(start_thread(kill_threads))
     except Exception as e:
         print('  System is able to run %d concurrent threads' % len(lim))

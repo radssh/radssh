@@ -1,13 +1,8 @@
-from __future__ import print_function
-
 import threading
 import time
 import sys
 import uuid
-try:
-    import queue
-except ImportError:
-    import Queue as queue
+import queue
 
 from radssh.dispatcher import UnfinishedJobs, JobSummary, Dispatcher
 

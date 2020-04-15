@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -18,10 +18,7 @@ from itertools import count
 import time
 import logging
 import traceback
-try:
-    import queue
-except ImportError:
-    import Queue as queue
+import queue
 
 
 class UnfinishedJobs(Exception):

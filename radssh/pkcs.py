@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -16,8 +16,6 @@ Uses a key (RSA) to encrypt and/or decrypt a short plaintext message, like a pas
 
 See: http://tools.ietf.org/html/rfc3447
 '''
-from __future__ import print_function  # Requires Python 2.6 or higher
-
 
 import os
 import base64

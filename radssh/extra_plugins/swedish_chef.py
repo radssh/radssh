@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -10,8 +10,6 @@
 #
 
 '''Silly, simple, stupid example of a plugin that adds a *command'''
-
-from __future__ import print_function  # Requires Python 2.6 or higher
 
 # Define a python function that takes the following parameters:
 #    cluster - gives access to cluster connection list, results, etc.

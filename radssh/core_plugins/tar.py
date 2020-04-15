@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -17,7 +17,6 @@ Instead of using 'cat', as *get does, the remote command is 'tar'
 with options to feed the resulting tar file contents to stdout
 where RadSSH can write local files with the stdout buffer content.
 '''
-
 import os
 import itertools
 import sys

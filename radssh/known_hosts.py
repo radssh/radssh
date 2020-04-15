@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -16,8 +16,6 @@ elaborate constructs in the known_hosts file format, as well as speed
 improvements by not decoding all keys at load time, and avoiding checking
 for duplicates.
 '''
-from __future__ import print_function  # Requires Python 2.6 or higher
-
 
 import binascii
 import os
@@ -400,7 +398,7 @@ class HostKeyEntry:
                 try:
                     bits = int(fields[1])
                     exponent = int(fields[2])
-                    modulus = long(fields[3])
+                    modulus = int(fields[3])
                     key = paramiko.RSAKey(vals=(exponent, modulus))
                 except ValueError:
                     raise UnreadableKey('Invalid known_hosts line', line, lineno, filename)

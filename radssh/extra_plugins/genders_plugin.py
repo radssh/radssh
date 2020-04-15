@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -9,7 +9,6 @@
 # included with the distribution as file LICENSE.txt
 #
 
-from __future__ import print_function
 '''Genders cluster database plugin'''
 
 import genders

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -19,15 +19,11 @@ to be a pair (label, stderr), where label is typically a hostname
 and stderr is a boolean indicating if the message content came from
 stderr (highlight) or not.
 '''
-from __future__ import print_function
 import sys
 import threading
 import getpass
 from collections import deque, defaultdict
-try:
-    import queue
-except ImportError:
-    import Queue as queue
+import queue
 
 
 console_mutex = threading.Lock()
@@ -35,7 +31,7 @@ console_mutex = threading.Lock()
 
 def user_input(prompt):
     with console_mutex:
-        answer = raw_input(prompt)
+        answer = input(prompt)
     return answer
 
 

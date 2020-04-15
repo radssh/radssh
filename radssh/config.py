@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -10,16 +10,12 @@
 #
 
 '''Configuration file module'''
-from __future__ import print_function  # Requires Python 2.6 or higher
 
 
 import sys
 import os
 import warnings
-try:
-    from io import StringIO
-except ImportError:
-    from StringIO import StringIO
+from io import StringIO
 
 
 system_settings_file = '/etc/radssh_config'
@@ -128,9 +124,6 @@ force_tty.signoff=term length 20
 # Should RadSSH initially send auth_none request (needed for OpenSSH 4.3 banner)
 try_auth_none=off
 '''
-
-if sys.version_info[:2] == (2, 7):
-    default_config = unicode(default_config)
 
 
 def load_settings_file(f):

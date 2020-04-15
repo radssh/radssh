@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -13,8 +13,6 @@
 RadSSH Module
 Simplified Paramiko interface for managing clustered SSH interaction
 '''
-from __future__ import print_function  # Requires Python 2.6 or higher
-
 
 import os
 import threading
@@ -28,10 +26,7 @@ import logging
 import hashlib
 import shlex
 import subprocess
-try:
-    import queue
-except ImportError:
-    import Queue as queue
+import queue
 
 import paramiko
 
@@ -178,7 +173,7 @@ def connection_worker(host, conn, auth, sshconfig={}):
     # filled in, use the label as the hostname.
     if not conn:
         conn = host
-    if isinstance(conn, basestring):
+    if isinstance(conn, str):
         hostname = sshconfig.get('hostname', conn)
         port = sshconfig.get('port', '22')
         proxy = sshconfig.get('proxycommand')
@@ -606,7 +601,7 @@ class Cluster(object):
 
     def get_ssh_config(self, label, connection_spec=None):
         '''Lookup or create a dict of SSHConfig options for the given host'''
-        if isinstance(connection_spec, basestring):
+        if isinstance(connection_spec, str):
             host_spec = connection_spec
         else:
             host_spec = label
@@ -642,7 +637,7 @@ class Cluster(object):
         if jumpbox:
             t = self.connections.get(jumpbox)
         else:
-            t = self.connections.values()[0]
+            t = list(self.connections.values())[0]
         tunnel_list = []
         if not t:
             return None
@@ -672,7 +667,7 @@ class Cluster(object):
         if enable_list is None:
             self.console.q.put((('ENABLED', True), 'All %d hosts currently enabled' % len(self.connections)))
             return
-        if isinstance(enable_list, basestring):
+        if isinstance(enable_list, str):
             # Handle single value being passed instead of list
             enable_list = [enable_list]
 
@@ -743,7 +738,7 @@ class Cluster(object):
                     return None
             else:
                 if v not in self.user_vars:
-                    x = raw_input('Missing variable setting for %s\nEnter value : ' % v)
+                    x = input('Missing variable setting for %s\nEnter value : ' % v)
                     self.user_vars[v] = x
                 cmd = cmd.replace(v, self.user_vars[v])
 

@@ -1,4 +1,4 @@
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -8,7 +8,7 @@
 # included with the distribution as file LICENSE.txt
 #
 
-Requires Python 2.6+, so CentOS 5 is not supported for running the utility, but is for connecting as destination hosts. You will also need to have Paramiko and netaddr modules available (CentOS6 RPM names python-paramiko-1.7.5-2.1.el6.noarch &  python-netaddr-0.7.5-4.el6.noarch) Paramiko should in turn have a dependency on either PyCrypto (for Paramiko 1.X) or cryptography (for Paramiko 2 or later).
+Requires Python 3.5+. For earlier versions, RadSSH 1.1.2 is the last release supporting Python2 (and 3.4 and below). You will also need to have Paramiko and netaddr modules available, preferrably installed with your Linux distribution's own package manager.
 
 Since I restructured it as a source distributable module, you should also get python-setuptools-0.6.10-3.el6.noarch if you don't already have it. Installation as a system level module is done with:
 cd radssh

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -14,9 +14,6 @@ authentication possibilities to connect to multiple servers via Paramiko.
 Supports loading from an authentication file that can contain passwords
 or key files, and a way to match them to a host or hosts.
 '''
-
-from __future__ import print_function  # Requires Python 2.6 or higher
-
 import os
 import warnings
 import fnmatch

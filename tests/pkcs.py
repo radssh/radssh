@@ -5,10 +5,6 @@ Uses a key (RSA) to encrypt and/or decrypt a short plaintext message, like a pas
 
 See: http://tools.ietf.org/html/rfc3447
 '''
-
-from __future__ import print_function
-from future_builtins import zip
-
 import os
 import sys
 

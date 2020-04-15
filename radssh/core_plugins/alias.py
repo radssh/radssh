@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, 2018 LexisNexis Risk Data Management Inc.
+# Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
 # This file is part of the RadSSH software package.
 #
@@ -13,8 +13,6 @@
 Basic support for local shell aliases to be usable on remote clusters.
 Really crude support for shorthand !$ and !! expansion
 '''
-
-from __future__ import print_function
 
 import os
 import subprocess
