@@ -27,6 +27,7 @@ def star_bork(cluster, logdir, cmd, *args):
     # This simple example only prints static text back to the console
     print('Bork bork bork')
 
+
 # Shell picks up the available *commands from each plugin
 # by looking for this named dictionary: keys are the text
 # to match, and values are the functions to call...

@@ -17,12 +17,10 @@ improvements by not decoding all keys at load time, and avoiding checking
 for duplicates.
 '''
 
-import binascii
 import os
 import threading
 import base64
 import fnmatch
-import warnings
 import logging
 from collections import defaultdict
 

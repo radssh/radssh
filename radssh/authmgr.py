@@ -23,10 +23,9 @@ import base64
 
 import netaddr
 
-with warnings.catch_warnings(record=True):
-    import paramiko
+import paramiko
 
-from .pkcs import PKCS_OAEP, PKCSError
+from .pkcs import PKCS_OAEP
 from .console import user_password
 
 
@@ -445,6 +444,7 @@ class AuthManager(object):
                 pass
 
         return None
+
 
 if __name__ == '__main__':
     import sys

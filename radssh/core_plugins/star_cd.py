@@ -30,4 +30,5 @@ def command_listener(cmd):
     if (curr_dir and cmd and cmd[0] != '*'):
         return 'cd %s ; %s' % (curr_dir, cmd)
 
+
 star_commands = {'*cd': star_cd}

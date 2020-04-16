@@ -9,7 +9,6 @@
 # included with the distribution as file LICENSE.txt
 #
 '''Jumpbox support - allow connections to be made through paramiko connections via tunneling'''
-import paramiko
 import getpass
 
 import radssh.ssh as ssh
@@ -21,6 +20,7 @@ init_data = {}
 
 class JumpData(object):
     pass
+
 
 jb = JumpData()
 

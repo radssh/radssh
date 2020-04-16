@@ -90,8 +90,6 @@ import imp
 import os
 import warnings
 
-import radssh
-
 
 class StarCommand(object):
     '''

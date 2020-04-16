@@ -67,6 +67,7 @@ def eject():
         print('Auto-saving VCR contents')
         vcr.save()
 
+
 atexit.register(eject)
 
 
@@ -124,5 +125,6 @@ def playback(cluster, logdir, cmd, *args):
     with open(filename) as f:
         shell(cluster, logdir, f)
     print('*** Playback of %s complete ***' % filename)
+
 
 star_commands = {'*record': record, '*pause': pause, '*playback': playback}

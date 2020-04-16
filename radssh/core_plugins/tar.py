@@ -19,11 +19,7 @@ where RadSSH can write local files with the stdout buffer content.
 '''
 import os
 import itertools
-import sys
-import logging
 import traceback
-
-from radssh.plugins import StarCommand
 
 tar_options = {
     '*tar': '-cv',
@@ -55,6 +51,7 @@ def tar_command(cluster, logdir, cmd, *args):
             print(host, repr(job), result)
             traceback.print_exc()
     cluster.console.quiet(save_quiet)
+
 
 star_commands = {
     '*tar': tar_command,

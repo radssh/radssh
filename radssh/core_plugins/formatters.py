@@ -24,6 +24,7 @@ import string
 import fcntl
 import termios
 import struct
+import re
 
 # See: http://misc.flogisoft.com/bash/tip_colors_and_formatting
 # Grab a broad range of colors that avoid the muddled dark on dark contrast

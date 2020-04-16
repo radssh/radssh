@@ -305,7 +305,7 @@ def exec_command(host, t, cmd, quota, streamQ, encoding='UTF-8'):
                     prompt_lines = [x.strip() for x in data.split('\n') if x.strip()]
                     persist_prompt = prompt_lines[-1]
                     stdout.push('\n=== Start of Exec: Prompt is [%s] ===\n\n' % persist_prompt)
-                except (socket.timeout, IndexError) as e:
+                except (socket.timeout, IndexError):
                     persist_prompt = None
                     stdout.push('\n=== Start of Exec: Failed to read prompt [%s] ===\n\n' % data)
                 s.send('%s\n' % cmd)
@@ -683,17 +683,17 @@ class Cluster(object):
             pattern_match = set()
             try:
                 ip_match = netaddr.IPNetwork(pattern)
-            except Exception as e:
+            except Exception:
                 try:
                     ip_match = netaddr.IPSet(netaddr.IPGlob(pattern))
-                except Exception as e:
+                except Exception:
                     ip_match = None
             for host, t in self.connections.items():
                 if ip_match:
                     try:
                         if netaddr.IPAddress(t.getpeername()[0]) in ip_match:
                             pattern_match.add(host)
-                    except Exception as e:
+                    except Exception:
                         pass
                 else:
                     if fnmatch.fnmatch(str(host), pattern):
@@ -791,7 +791,7 @@ class Cluster(object):
                             ordered_list.remove(host)
                         self.console.status('Completed on %d/%d hosts' % (len(result), total))
 
-                except UnfinishedJobs as e:
+                except UnfinishedJobs:
                     pass
                 except KeyboardInterrupt:
                     self.console.status('<Ctrl-C>')
@@ -882,7 +882,7 @@ class Cluster(object):
                     if not summary.completed:
                         self.console.message('%s - %s' % (str(host), repr(summary.result)), 'EXCEPTION')
                     self.console.status('Completed on %d/%d hosts' % (total - len(self.pending), total))
-            except UnfinishedJobs as e:
+            except UnfinishedJobs:
                 pass
             except KeyboardInterrupt:
                 self.console.message('<Ctrl-C> SFTP Transfer ignored.')

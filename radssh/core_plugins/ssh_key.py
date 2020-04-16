@@ -14,7 +14,6 @@
 import os
 import socket
 
-import radssh.plugins
 from radssh.authmgr import _importKey
 
 

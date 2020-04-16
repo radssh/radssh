@@ -4,7 +4,7 @@ import sys
 import uuid
 import queue
 
-from radssh.dispatcher import UnfinishedJobs, JobSummary, Dispatcher
+from radssh.dispatcher import UnfinishedJobs, Dispatcher
 
 epoch = time.time()
 
@@ -31,6 +31,7 @@ def arg_printer(*args, **kwargs):
     sys.stdout.write('<<< Thread %s returning its result\n' % (threading.currentThread().getName()))
     sys.stdout.flush()
     return('%d - 5 = %d' % (args[0], args[0] - 5), '//%s//' % args[1], time.time() - epoch)
+
 
 # If we really don't care about feedback of results, we don't need a resultQ
 # the Dispatcher will discard the results if we don't have one. For this

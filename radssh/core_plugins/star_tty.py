@@ -116,4 +116,5 @@ def radssh_tty(cluster, logdir, cmd, *args):
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, oldtty)
     fcntl.fcntl(sys.stdin, fcntl.F_SETFL, old_fcntl)
 
+
 star_commands = {'*tty': radssh_tty}

@@ -30,12 +30,6 @@ import pprint
 import readline
 import atexit
 import logging
-import warnings
-import traceback
-
-# Avoid having PowmInsecureWarning show on stderr every time
-with warnings.catch_warnings(record=True) as paramiko_load_warnings:
-    import paramiko
 
 from . import ssh
 from . import config
@@ -216,9 +210,9 @@ class radssh_tab_handler(object):
                             st = os.stat(os.path.join(path_dir, f))
                             if (st.st_mode & 0o111) and f.startswith(text):
                                 self.completion_choices.append(f + ' ')
-                        except OSError as e:
+                        except OSError:
                             continue
-                except OSError as e:
+                except OSError:
                     continue
             self.completion_choices.append(None)
         return self.completion_choices[state]
@@ -245,7 +239,7 @@ class radssh_tab_handler(object):
                         s.chdir(full_path)
                         x += '/'
                         full_path += '/'
-                    except Exception as e:
+                    except Exception:
                         pass
                     if self.using_libedit:
                         self.completion_choices.append(full_path)
@@ -290,7 +284,7 @@ class radssh_tab_handler(object):
             else:
                 # Default behavior - remote file path completion
                 return self.complete_remote_path(lead_in, text, state)
-        except Exception as e:
+        except Exception:
             raise
 
 
@@ -341,10 +335,6 @@ def radssh_shell_main():
     except AttributeError:
         raise RuntimeError('RadSSH setting "loglevel" should be set to one of [CRITICAL,ERROR,WARNING,INFO,DEBUG] instead of "%s"', defaults['loglevel'])
     logger = logging.getLogger('radssh')
-
-    # With logging setup, output any deferred warnings
-    for w in paramiko_load_warnings:
-        logger.warning(warnings.formatwarning(w.message, w.category, w.filename, w.lineno))
 
     # Make an AuthManager to handle user authentication
     a = ssh.AuthManager(defaults['username'],

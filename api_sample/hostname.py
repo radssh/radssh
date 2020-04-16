@@ -23,7 +23,6 @@ import syslog
 from radssh.ssh import Cluster
 from radssh.console import RadSSHConsole
 from radssh.authmgr import AuthManager
-import radssh.config
 
 if len(sys.argv) < 2:
     print('Usage: %s [--password=<password> ] host1 [...]' % sys.argv[0])

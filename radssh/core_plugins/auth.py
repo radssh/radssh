@@ -21,4 +21,5 @@ def star_auth(cluster, logdir, cmd, *args):
         user = args[0]
     cluster.reauth(user)
 
+
 star_commands = {'*auth': star_auth}

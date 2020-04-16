@@ -22,19 +22,19 @@ def lookup(name):
     try:
         ip = netaddr.IPAddress(name)
         return __generator([ip])
-    except Exception as e:
+    except Exception:
         pass
 
     try:
         subnet = netaddr.IPNetwork(name)
         return __generator(subnet)
-    except Exception as e:
+    except Exception:
         pass
 
     try:
         glob = netaddr.IPGlob(name)
         return __generator(glob)
-    except Exception as e:
+    except Exception:
         pass
 
     return None

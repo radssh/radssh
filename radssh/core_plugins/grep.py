@@ -11,6 +11,7 @@
 
 '''Finding and matching output content, or job return_code'''
 
+
 def star_grep(cluster, logdir, cmdline, *args):
     '''Scan (not real grep) for string matches in stdout'''
     # Get from cmdline, not args as it might have signifiance space
@@ -66,7 +67,7 @@ def star_error(cluster, logdir, cmdline, *args):
                 elif job.result.return_code in specific_codes:
                     # or if an explicit list was specified, check against that
                     enable_hosts.append(str(host))
-        except (TypeError, KeyError) as e:
+        except (TypeError, KeyError):
             pass
     if enable_hosts:
         print('Enabling:', enable_hosts, '( %d hosts)' % len(enable_hosts))

@@ -5,9 +5,6 @@ Uses a key (RSA) to encrypt and/or decrypt a short plaintext message, like a pas
 
 See: http://tools.ietf.org/html/rfc3447
 '''
-import os
-import sys
-
 from radssh.pkcs import PKCSError, PKCS_OAEP
 
 ##################################################################
@@ -58,5 +55,6 @@ def test_cases():
         for x in texts:
             if private.decrypt(x) != plaintext[orig]:
                 print('Encrypted [%s] to [%s] but it came back [%s]' % (plaintext[orig], x, private.decrypt(x)))
+
 
 test_cases()

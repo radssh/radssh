@@ -17,7 +17,6 @@ Really crude support for shorthand !$ and !! expansion
 import os
 import subprocess
 import readline
-import logging
 
 
 def gather_history():
@@ -38,6 +37,7 @@ def star_history(cluster, logdir, cmd, *args):
     hist = gather_history()
     for n, line in enumerate(hist, 1):
         print('%5d - %s' % (n, line))
+
 
 last_command = ''
 aliases = {}
@@ -100,6 +100,7 @@ def print_aliases(cluster, logdir, cmd, *args):
             print('    %s = \'%s\'' % (name, value))
     else:
         print('No local aliases loaded')
+
 
 star_commands = {'*alias': print_aliases,
                  '*history': star_history}

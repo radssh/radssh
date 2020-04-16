@@ -62,4 +62,5 @@ def star_drop(cluster, logdir, cmd, *args):
         else:
             print('Host %s not connected' % host)
 
+
 star_commands = {'*add': star_add, '*drop': star_drop}

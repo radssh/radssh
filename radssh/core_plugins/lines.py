@@ -11,6 +11,7 @@
 
 '''Breakdown of unique lines (or words) from last command output'''
 
+
 class Histogram(object):
     def __init__(self):
         self.d = {}
@@ -50,6 +51,7 @@ def words(cluster, logdir, cmd, *args):
                 h.add(line.split())
     for count, line in h:
         print('%6d - %s' % (count, line.decode(cluster.defaults['character_encoding'], 'replace')))
+
 
 star_commands = {'*lines': lines, '*words': words}
 

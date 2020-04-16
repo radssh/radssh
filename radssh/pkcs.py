@@ -176,7 +176,9 @@ class PKCS_OAEP(object):
             raise PKCSError('Ciphertext cannot be base64 decoded: %s' % str(e))
         return self.decrypt_binary(data).decode()
 
+
 __all__ = ['PKCSError', 'PKCS_OAEP']
+
 
 ##################################################################
 
@@ -211,6 +213,7 @@ def main(args):
             else:
                 result = pkcs.decrypt(x)
             print('[%s] -> [%s]' % (x, result))
+
 
 if __name__ == '__main__':
     import sys
