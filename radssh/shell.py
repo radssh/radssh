@@ -437,23 +437,27 @@ def radssh_shell_main():
 
     # Create a RadSSHConsole instance for screen output
     job_buffer = int(defaults['stalled_job_buffer'])
-    if '.' in defaults['shell.console']:
+    console_name = defaults['shell.console']
+    console = None
+    if '.' in console_name:
         # Try finding formatter as module.function from loaded plugins
-        logger.info('Attempting to load custom console formatter: %s', defaults['shell.console'])
-        module_name, function_name = defaults['shell.console'].split('.', 1)
+        logger.info('Attempting to load custom console formatter: %s', console_name)
+        module_name, function_name = console_name.split('.', 1)
         try:
             custom_formatter = getattr(loaded_plugins[module_name], function_name)
             console = RadSSHConsole(formatter=custom_formatter, retain_recent=job_buffer)
         except KeyError:
-            logger.error('Plugin not loaded for shell.console formatter %s', defaults['shell.console'])
+            logger.error('Plugin not loaded for shell.console formatter %s', console_name)
         except AttributeError:
-            logger.error('Plugin formatter not found for shell.console formatter %s', defaults['shell.console'])
+            logger.error('Plugin formatter not found for shell.console formatter %s', console_name)
         except Exception as e:
-            logger.error('Exception on console formatter %s: %r', defaults['shell.console'], e)
-    elif defaults['shell.console'] != 'color' or not sys.stdout.isatty():
-        console = RadSSHConsole(formatter=monochrome, retain_recent=job_buffer)
-    else:
-        console = RadSSHConsole(retain_recent=job_buffer)
+            logger.error('Exception on console formatter %s: %r', console_name, e)
+    # Fallback to a standard console if plugin provided one did not load
+    if console is None:
+        if  not sys.stdout.isatty() or console_name == 'monochrome':
+            console = RadSSHConsole(formatter=monochrome, retain_recent=job_buffer)
+        else:
+            console = RadSSHConsole(retain_recent=job_buffer)
 
     # Finally, we are able to create the Cluster
     print('Connecting to %d hosts...' % len(hosts))
