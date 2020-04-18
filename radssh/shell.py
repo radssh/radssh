@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #

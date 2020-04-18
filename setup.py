@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2014, 2016, 2018, 2020 LexisNexis Risk Data Management Inc.
 #
@@ -21,14 +21,6 @@ from os.path import isfile, join
 
 import radssh
 
-# Apply auto-changes to make Python3 code from 2.X
-if sys.version_info >= (3,):
-    skip_fixes = 'print callable dict future imports'
-    do_not_fix = ['lib2to3.fixes.fix_%s' % x for x in skip_fixes.split()]
-    auto_2to3 = {'use_2to3': True,
-                 'use_2to3_exclude_fixers': do_not_fix}
-else:
-    auto_2to3 = {}
 
 # Gather up all supplemental plugins from various directories
 # and copy them into the core plugins directory prior to install
@@ -50,7 +42,7 @@ pkg_data_files = [join('plugins', f) for f in listdir('plugins') if not f.endswi
 os.chdir(olddir)
 
 # Conditional requirements (colorama for Windows platform only)
-required_packages = ['paramiko', 'netaddr']
+required_packages = ['paramiko>=2.7.0', 'netaddr']
 if sys.platform.startswith('win'):
     required_packages.append('colorama>=0.3.9')
     required_packages.append('pyreadline')
@@ -73,14 +65,11 @@ setup(name='radssh',
           'Operating System :: POSIX',
           'Operating System :: Microsoft :: Windows',
           'Operating System :: MacOS :: MacOS X',
-          'Programming Language :: Python :: 2',
-          'Programming Language :: Python :: 2.6',
-          'Programming Language :: Python :: 2.7',
           'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.3',
-          'Programming Language :: Python :: 3.4',
           'Programming Language :: Python :: 3.5',
           'Programming Language :: Python :: 3.6',
+          'Programming Language :: Python :: 3.7',
+          'Programming Language :: Python :: 3.8',
           'Topic :: System :: Shells',
           'Topic :: Utilities'],
       packages=['radssh', 'radssh.plugins'],
@@ -140,4 +129,4 @@ Interested in more?
  * Read the Docs at http://radssh.readthedocs.org/en/latest/index.html
  * Participate at https://github.com/radssh/radssh
 ''',
-      **auto_2to3)
+      )
