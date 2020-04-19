@@ -26,6 +26,7 @@ import os
 import sys
 import time
 import platform
+import distro
 import threading
 
 import netaddr
@@ -77,8 +78,8 @@ if __name__ == '__main__':
     print('Python %s (%s)' % (platform.python_version(), platform.python_implementation()))
     print('Running on', platform.system(), '[%s]' % platform.node())
     if platform.system() == 'Linux':
-        print('  %s (%s)' % (platform.linux_distribution()[0],
-                             '/'.join(platform.linux_distribution()[1:])))
+        print('  %s (%s)' % (distro.linux_distribution()[0],
+                             '/'.join(distro.linux_distribution()[1:])))
     print('Encoding for stdout:', sys.stdout.encoding)
 
     # Test runtime limits of open files and threads
