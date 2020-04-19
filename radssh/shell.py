@@ -74,8 +74,8 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
     '''Very basic interactive shell'''
     if not defaults:
         defaults = config.load_default_settings()
-    try:
-        while True:
+    while True:
+        try:
             if playbackfile:
                 try:
                     cmd = next(playbackfile)
@@ -151,8 +151,11 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                             print(k, '\t-', sorted(v))
                 if completions:
                     print('Average completion time for %d hosts: %fs' % (len(completions), (completion_time / len(completions))))
-    except EOFError as e:
-        print(e)
+        except KeyboardInterrupt:
+            print('Ctrl-C during command preparation - command aborted.')
+        except EOFError as e:
+            print(e)
+            break
     print('Shell exiting')
     cluster.close_connections()
 
