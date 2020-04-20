@@ -20,7 +20,6 @@ plugin with an arbitrary name, and multiple formatter functions.
 To enable custom formatter, set "shell.console=formatters.ansi256"
 '''
 
-import string
 import fcntl
 import termios
 import struct
@@ -49,7 +48,7 @@ def ansi256_rj(tag, text):
 
     color = palette[hash(label) % len(palette)]
     for line in text.split('\n'):
-        wide_line = string.ljust(line, width - len(label) - 2, ' ')
+        wide_line = line.ljust(width - len(label) - 2, ' ')
         if hilight:
             yield '\033[1;38;5;%dm%s[%s]\033[0m\n' % (color, wide_line, label)
         else:
