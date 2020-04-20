@@ -26,7 +26,6 @@ import os
 import sys
 import time
 import platform
-import distro
 import threading
 
 import netaddr
@@ -66,7 +65,7 @@ def start_thread(event):
 
 
 if __name__ == '__main__':
-    print('RadSSH Main Module')
+    print('RadSSH Runtime Information Report')
     print('Package RadSSH %s from (%s)' % (radssh.version, radssh.__file__))
     # Dependent modules - Print version and location
     print('  Using Paramiko ', paramiko.__version__, 'from', paramiko.__file__)
@@ -76,10 +75,15 @@ if __name__ == '__main__':
 
     # Runtime environment info
     print('Python %s (%s)' % (platform.python_version(), platform.python_implementation()))
-    print('Running on', platform.system(), '[%s]' % platform.node())
+    print('Running on', platform.system(), platform.release(), '[%s]' % platform.node())
     if platform.system() == 'Linux':
-        print('  %s (%s)' % (distro.linux_distribution()[0],
-                             '/'.join(distro.linux_distribution()[1:])))
+        # Use distro if available for details, otherwise fallback to platform.platform
+        try:
+            import distro
+            print('  %s (%s)' % (distro.linux_distribution()[0],
+                             '/'.join([fld for fld in distro.linux_distribution()[1:] if fld])))
+        except ImportError:
+            print('  %s' % platform.platform())
     print('Encoding for stdout:', sys.stdout.encoding)
 
     # Test runtime limits of open files and threads
