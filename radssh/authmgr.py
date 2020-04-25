@@ -129,6 +129,34 @@ def _importKey(filename, allow_prompt=True, logger=None):
     if logger:
         logger.debug('Failed to load %s as ECDSA key\n\t%s', filename, repr(ecdsa_exception))
 
+    # Format error - could be ed25519 key instead...
+    try:
+        key = paramiko.Ed25519Key(filename=filename)
+        if logger:
+            logger.debug('Loaded unprotected Ed25519 key from %s', filename)
+        return key
+    except paramiko.PasswordRequiredException:
+        # Need passphrase for Ed25519 key
+        if not allow_prompt:
+            return RuntimeError('Ed25519 Key is Passphrase-Protected')
+        retries = 3
+        while retries:
+            try:
+                passphrase = user_password('Enter passphrase for Ed25519 key [%s]: ' % filename)
+                key = paramiko.Ed25519Key(filename=filename, password=passphrase)
+                if logger:
+                    logger.debug('Loaded passphrase protected Ed25519 key from %s', filename)
+                return key
+            except paramiko.SSHException as e:
+                print(repr(e))
+                retries -= 1
+        return Exception('3 failed passphrase attempts for %s' % filename)
+    except paramiko.SSHException as e:
+        ecdsa_exception = e
+
+    if logger:
+        logger.debug('Failed to load %s as Ed25519 key\n\t%s', filename, repr(ecdsa_exception))    
+
     # Format error - could be DSA key instead...
     try:
         key = paramiko.DSSKey(filename=filename)
@@ -301,7 +329,7 @@ class AuthManager(object):
             if auth_type == 'publickey' and sshconfig.get('pubkeyauthentication', 'yes') == 'yes':
                 # Try explicit keys first
                 identity_keys = []
-                for keyfile in sshconfig.get('identityfile', ['~/.ssh/id_rsa', '~/.ssh/id_dsa', '~/.ssh/id_ecdsa']):
+                for keyfile in sshconfig.get('identityfile', ['~/.ssh/id_rsa', '~/.ssh/id_ed25519', '~/.ssh/id_dsa', '~/.ssh/id_ecdsa']):
                     k = os.path.expanduser(keyfile)
                     if os.path.exists(k):
                         if k not in self.deferred_keys:
