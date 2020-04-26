@@ -249,7 +249,7 @@ class KnownHosts (object):
                                 self._wildcards.append((h, offset + lineno))
                             else:
                                 self._index[h].append(offset + lineno)
-                except (UnreadableKey, TypeError) as e:
+                except (UnreadableKey, TypeError):
                     logging.getLogger('radssh.keys').error(
                         'Skipping unloadable key line (%s:%d): %s' % (filename, lineno + 1, line))
                     pass
@@ -390,16 +390,6 @@ class HostKeyEntry:
                 key = paramiko.DSSKey(data=base64.b64decode(key))
             elif keytype == 'ecdsa-sha2-nistp256':
                 key = paramiko.ECDSAKey(data=base64.b64decode(key), validate_point=False)
-            elif len(fields) > 3:
-                # SSH-1 Key format consists of 3 integer fields
-                #     bits, exponent, modulus (RSA Only)
-                try:
-                    bits = int(fields[1])
-                    exponent = int(fields[2])
-                    modulus = int(fields[3])
-                    key = paramiko.RSAKey(vals=(exponent, modulus))
-                except ValueError:
-                    raise UnreadableKey('Invalid known_hosts line', line, lineno, filename)
             else:
                 raise UnreadableKey('Invalid known_hosts line', line, lineno, filename)
             return cls(names, key, marker, lineno, filename)
