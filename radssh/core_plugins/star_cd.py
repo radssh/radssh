@@ -11,24 +11,38 @@
 
 import os
 
-curr_dir = ''
+settings = {
+    'curr_dir': '~',
+    'paths': ''
+}
+
+
+def init(**kwargs):
+    # convert plugin.star_cd.paths from colon-separated string to list
+    settings['path_list'] = settings['paths'].split(':')
 
 
 def star_cd(cluster, logdir, cmd, *args):
     '''global chdir (prepends to all cmds)'''
-    global curr_dir
     if not args:
-        curr_dir = ''
-        return
-    if os.path.isabs(args[0]) or args[0].startswith('~'):
-        curr_dir = args[0]
-        return
-    curr_dir = os.path.join(curr_dir, args[0])
+        settings['curr_dir'] = '~'
+    elif os.path.isabs(args[0]) or args[0].startswith('~'):
+        settings['curr_dir'] = args[0]
+    else:
+        settings['curr_dir'] = os.path.join(settings['curr_dir'], args[0])
+    cluster.user_vars['%curr_dir%'] = settings['curr_dir']
 
 
 def command_listener(cmd):
-    if (curr_dir and cmd and cmd[0] != '*'):
-        return 'cd %s ; %s' % (curr_dir, cmd)
+    if not cmd or cmd[0] == '*':
+        return
+    new_cmd = cmd
+    if settings['paths']:
+        new_cmd = "PATH=$PATH:{}; {}".format(settings['paths'], new_cmd)
+    if settings['curr_dir'] != '~':
+        new_cmd = "cd {}; {}".format(settings['curr_dir'], new_cmd)
+    if new_cmd != cmd:
+        return new_cmd
 
 
 star_commands = {'*cd': star_cd}
