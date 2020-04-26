@@ -20,6 +20,11 @@ import os
 import fcntl
 
 
+settings = {
+    'prompt_delay': "5.0"
+}
+
+
 def posix_shell(chan, encoding='UTF-8'):
     partial_buf = b''
     try:
@@ -73,27 +78,32 @@ def radssh_tty(cluster, logdir, cmd, *args):
     tty.setcbreak(sys.stdin.fileno())
     old_fcntl = fcntl.fcntl(sys.stdin, fcntl.F_GETFL)
     fcntl.fcntl(sys.stdin, fcntl.F_SETFL, old_fcntl | os.O_NONBLOCK)
-    prompt_delay = 3.0
+    try:
+        prompt_delay = float(settings['prompt_delay'])
+    except ValueError:
+        prompt_delay = 5.0
+
     for x in args:
         if not cluster.locate(x):
             print('Skipping TTY request for %s (not found)\r' % str(x))
             continue
-        try:
-            print('Starting TTY session for [%s] in %g seconds...\r' % (x, prompt_delay))
-            print(
-                '(Press \'S\' to skip, \'X\' to abort, any other key to connect immediately)',
-                end='')
-            sys.stdout.flush()
-            r, w, e = select.select([sys.stdin], [], [], prompt_delay)
-            print('\r\n')
-            if r:
-                keystroke = sys.stdin.read()
-                if keystroke in ('s', 'S'):
-                    continue
-                if keystroke in ('x', 'X'):
-                    break
-        except Exception as e:
-            print(e)
+        if prompt_delay:
+            try:
+                print('Starting TTY session for [%s] in %g seconds...\r' % (x, prompt_delay))
+                print(
+                    '(Press \'S\' to skip, \'X\' to abort, any other key to connect immediately)',
+                    end='')
+                sys.stdout.flush()
+                r, w, e = select.select([sys.stdin], [], [], prompt_delay)
+                print('\r\n')
+                if r:
+                    keystroke = sys.stdin.read()
+                    if keystroke in ('s', 'S'):
+                        continue
+                    if keystroke in ('x', 'X'):
+                        break
+            except Exception as e:
+                print(e)
         try:
             session = None
             t = cluster.connections[cluster.locate(x)]
@@ -103,10 +113,12 @@ def radssh_tty(cluster, logdir, cmd, *args):
             session = t.open_session()
             session.set_combine_stderr(True)
             session.get_pty(width=cols, height=lines)
-            print('Starting TTY session for %s\r' % str(x))
+            if prompt_delay:
+                print('Starting TTY session for %s\r' % str(x))
             session.invoke_shell()
             posix_shell(session, cluster.defaults['character_encoding'])
-            print('TTY session for %s completed\r' % str(x))
+            if prompt_delay:
+                print('TTY session for %s completed\r' % str(x))
             session.close()
         except Exception as e:
             print('Exception occurred while trying TTY for %s\r' % str(x))
