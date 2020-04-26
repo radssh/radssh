@@ -96,7 +96,7 @@ def radssh_tty(cluster, logdir, cmd, *args):
     fcntl.fcntl(sys.stdin, fcntl.F_SETFL, old_fcntl | os.O_NONBLOCK)
     try:
         prompt_delay = float(settings['prompt_delay'])
-    except ValueError:
+    except ValueError, KeyError:
         prompt_delay = 5.0
 
     for x in args:
