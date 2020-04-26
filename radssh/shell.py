@@ -465,11 +465,12 @@ def radssh_shell_main():
     # Finally, we are able to create the Cluster
     print('Connecting to %d hosts...' % len(hosts))
     cluster = ssh.Cluster(hosts, auth=a, console=console, defaults=defaults)
+
+    ready, disabled, failed_auth, failed_connect, dropped = cluster.connection_summary()
     if defaults['loglevel'] not in ('CRITICAL', 'ERROR'):
         star.star_info(cluster, logdir, '', [])
     else:
         # If cluster is not 100% connected, let user know even if loglevel is not low enough
-        ready, disabled, failed_auth, failed_connect, dropped = cluster.connection_summary()
         if any((failed_auth, failed_connect, dropped)):
             print('There were problems connecting to some nodes:')
             if failed_connect:
@@ -479,6 +480,16 @@ def radssh_shell_main():
             if dropped:
                 print('    %d dropped connections' % dropped)
             print('    Use "*info" for connection details.')
+
+    if ready == 1 and disabled + failed_auth + failed_connect + dropped == 0:
+        # Cluster size of one - check if auto_tty is set
+        if defaults['auto_tty'] == 'on' and 'star_tty' in loaded_plugins:
+            print('Auto-invoking *tty for a cluster size of 1')
+            loaded_plugins['star_tty'].settings['prompt_delay'] = "0.0"
+            star.call(cluster, logdir, '*tty')
+            # cluster.console.join()
+            cluster.close_connections()
+            raise SystemExit("Session complete")
 
     # Command line history support
     if defaults.get('historyfile'):
