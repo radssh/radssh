@@ -155,7 +155,7 @@ def _importKey(filename, allow_prompt=True, logger=None):
         ecdsa_exception = e
 
     if logger:
-        logger.debug('Failed to load %s as Ed25519 key\n\t%s', filename, repr(ecdsa_exception))    
+        logger.debug('Failed to load %s as Ed25519 key\n\t%s', filename, repr(ecdsa_exception))
 
     # Format error - could be DSA key instead...
     try:

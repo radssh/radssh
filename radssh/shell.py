@@ -457,7 +457,7 @@ def radssh_shell_main():
             logger.error('Exception on console formatter %s: %r', console_name, e)
     # Fallback to a standard console if plugin provided one did not load
     if console is None:
-        if  not sys.stdout.isatty() or console_name == 'monochrome':
+        if not sys.stdout.isatty() or console_name == 'monochrome':
             console = RadSSHConsole(formatter=monochrome, retain_recent=job_buffer)
         else:
             console = RadSSHConsole(retain_recent=job_buffer)

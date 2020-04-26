@@ -21,14 +21,10 @@ import readline
 
 def gather_history():
     '''Pull history lines as a list'''
-    n = 1
     result = []
-    while True:
+    for n in range(1, 1 + readline.get_current_history_length()):
         line = readline.get_history_item(n)
-        if not line:
-            break
         result.append(line)
-        n += 1
     return result
 
 
