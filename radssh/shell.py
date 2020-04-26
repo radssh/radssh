@@ -81,7 +81,7 @@ def shell(cluster, logdir=None, playbackfile=None, defaults=None):
                     cmd = next(playbackfile)
                     print('%s %s' % (defaults['shell.prompt'], cmd.strip()))
                 except StopIteration:
-                    break
+                    return
             else:
                 try:
                     cmd = input('%s ' % defaults['shell.prompt'])

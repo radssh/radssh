@@ -122,7 +122,7 @@ def playback(cluster, logdir, cmd, *args):
             print('Failed to load variables from [%s]' % filename + '.vars')
             print('%r' % e)
     with open(filename) as f:
-        shell(cluster, logdir, f)
+        shell(cluster, logdir, f, cluster.defaults)
     print('*** Playback of %s complete ***' % filename)
 
 
