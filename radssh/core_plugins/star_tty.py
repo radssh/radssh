@@ -125,7 +125,6 @@ def radssh_tty(cluster, logdir, cmd, *args):
                 print('Skipping TTY request for %s (not authenticated)\r' % str(x))
                 continue
             session = t.open_session()
-            session.set_combine_stderr(True)
             session.get_pty(width=cols, height=lines)
             if prompt_delay:
                 print('Starting TTY session for %s\r' % str(x))
