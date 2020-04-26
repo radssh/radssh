@@ -18,12 +18,26 @@ import termios
 import tty
 import os
 import fcntl
+import time
 
 
 settings = {
-    'prompt_delay': "5.0"
+    'prompt_delay': "5.0",
+    'rc_file': None
 }
 
+def init(**kwargs):
+    # If user has set an rc_file, read in the contents
+    settings['rc_commands'] = []
+    if settings.get('rc_file'):
+        try:
+            with open(os.path.expanduser(settings.get('rc_file'))) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line.startswith('#'):
+                        settings['rc_commands'].append(line)
+        except Exception:
+            pass
 
 def posix_shell(chan, encoding='UTF-8'):
     partial_buf = b''
@@ -116,6 +130,15 @@ def radssh_tty(cluster, logdir, cmd, *args):
             if prompt_delay:
                 print('Starting TTY session for %s\r' % str(x))
             session.invoke_shell()
+            if settings['rc_commands']:
+                print('# sending commands from {}\r'.format(settings['rc_file']))
+                for line in settings['rc_commands']:
+                    session.send((line+'\n').encode(cluster.defaults['character_encoding']))
+                # Attempt to quietly consume output from the sent commands
+                time.sleep(0.2)
+                session.recv(65536)
+                # And send an additional newline, to force new prompt line
+                session.send('\n')
             posix_shell(session, cluster.defaults['character_encoding'])
             if prompt_delay:
                 print('TTY session for %s completed\r' % str(x))
