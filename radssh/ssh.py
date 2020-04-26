@@ -460,6 +460,7 @@ class Cluster(object):
         self.chunk_size = None
         self.chunk_delay = 0
         self.output_mode = self.defaults['output_mode']
+        self.ordered_placeholder = self.defaults['ordered_placeholder']
         self.sshconfig = paramiko.SSHConfig()
         # Only load SSHConfig if path is set in RadSSH config
         if defaults.get('ssh_config'):
@@ -783,7 +784,7 @@ class Cluster(object):
                                 job = result[host]
                                 if job.result.stdout:
                                     self.console.q.put(((host, False), job.result.stdout.decode(self.defaults['character_encoding'])))
-                                else:
+                                elif self.ordered_placeholder == 'on':
                                     self.console.q.put(((host, False), '[No Output]'))
                                 if job.result.stderr:
                                     self.console.q.put(((host, True), job.result.stderr.decode(self.defaults['character_encoding'])))

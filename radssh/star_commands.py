@@ -84,7 +84,11 @@ def star_info(cluster, logdir, cmdline, *args):
         print('Disabled Nodes:')
         print(','.join([str(x) for x in cluster.disabled]))
     star_quota(cluster, logdir, '')
-    print('Cluster output mode: %s' % cluster.output_mode)
+    if cluster.output_mode == 'ordered':
+        print('Cluster output mode: ordered {} placeholders'.format(
+            'with' if cluster.ordered_placeholder == 'on' else 'without'))
+    else:
+        print('Cluster output mode: %s' % cluster.output_mode)
 
 
 def star_status(cluster, logdir, cmdline, *args):

@@ -64,8 +64,14 @@ historyfile=~/.radssh_history
 
 # Available modes: {stream, ordered, off}
 output_mode=stream
+# When output_mode is ordered, [No Output] is shown as a placeholder for
+# hosts without any output to show, as an explicit annotation. Use
+# ordered_placeholder=off to disable this
+ordered_placeholder=on
+
 # Can override character encoding (will use sys.stdout.encoding if not specified)
 # character_encoding=UTF-8
+
 # Avoiding runaway commands with either too much output, or
 # waiting indefinately at a user prompt...
 quota.time=0
