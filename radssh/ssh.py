@@ -153,10 +153,10 @@ def run_local_command(original_name, remote_hostname, port, remote_username, ssh
             '%r': sshconfig.get('user', remote_username),
             '%u': os.getlogin(),
             '%C': hashlib.sha1((
-                socket.gethostname() +
-                remote_hostname +
-                str(port) +
-                sshconfig.get('user', remote_username)).encode('UTF8')).hexdigest()
+                socket.gethostname()
+                + remote_hostname
+                + str(port)
+                + sshconfig.get('user', remote_username)).encode('UTF8')).hexdigest()
         }
         for token, subst in translations.items():
             cmd = cmd.replace(token, subst)
@@ -529,7 +529,7 @@ class Cluster(object):
                         else:
                             self.console.progress('O')
                             logging.getLogger('radssh.connection').warning('Failed to authenticate to %s: %s' % (host, str(transport)))
-                    except Exception as e:
+                    except Exception:
                         self.console.progress('X')
                         logging.getLogger('radssh.connection').warning('Failed to connect to %s: %s' % (host, str(transport)))
                 break
@@ -590,8 +590,7 @@ class Cluster(object):
                             conn = socket.create_connection((fqdn, 22), timeout=float(self.defaults.get('socket.timeout', 2.0)))
                             self.console.message('%s -> %s' % (k, fqdn), 'FQDN')
                             break
-                        except socket.error as e:
-                            # self.console.mesage (repr(e))
+                        except socket.error:
                             pass
             except Exception as e:
                 self.console.message('%s - %s' % (str(k), str(e)), 'EXCEPTION')
@@ -700,7 +699,7 @@ class Cluster(object):
                     if fnmatch.fnmatch(str(host), pattern):
                         pattern_match.add(host)
             if len(pattern_match) > 1:
-                    self.console.q.put((('ENABLED', True), 'Pattern wildcard "%s" matched %d hosts' % (pattern, len(pattern_match))))
+                self.console.q.put((('ENABLED', True), 'Pattern wildcard "%s" matched %d hosts' % (pattern, len(pattern_match))))
             enabled.update(pattern_match)
         # Take complement of enabled set
         for host in self.connections:

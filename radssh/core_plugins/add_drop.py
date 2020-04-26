@@ -33,7 +33,7 @@ def star_add(cluster, logdir, cmd, *args):
 
         print('Added to cluster:')
         for host, status in new_cluster.status():
-                print('%14s : %s' % (str(host), status))
+            print('%14s : %s' % (str(host), status))
 
 
 def star_drop(cluster, logdir, cmd, *args):

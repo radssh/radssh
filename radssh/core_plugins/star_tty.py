@@ -26,6 +26,7 @@ settings = {
     'rc_file': None
 }
 
+
 def init(**kwargs):
     # If user has set an rc_file, read in the contents
     settings['rc_commands'] = []
@@ -39,11 +40,12 @@ def init(**kwargs):
         except Exception:
             pass
 
+
 def posix_shell(chan, encoding='UTF-8'):
     partial_buf = b''
     try:
         while True:
-            r, w, e = select.select([chan, sys.stdin], [], [])
+            r, w, _ = select.select([chan, sys.stdin], [], [])
             if (chan in r):
                 try:
                     x = chan.recv(1024)
@@ -108,7 +110,7 @@ def radssh_tty(cluster, logdir, cmd, *args):
                     '(Press \'S\' to skip, \'X\' to abort, any other key to connect immediately)',
                     end='')
                 sys.stdout.flush()
-                r, w, e = select.select([sys.stdin], [], [], prompt_delay)
+                r, w, _ = select.select([sys.stdin], [], [], prompt_delay)
                 print('\r\n')
                 if r:
                     keystroke = sys.stdin.read()
@@ -132,7 +134,7 @@ def radssh_tty(cluster, logdir, cmd, *args):
             if settings['rc_commands']:
                 print('# sending commands from {}\r'.format(settings['rc_file']))
                 for line in settings['rc_commands']:
-                    session.send((line+'\n').encode(cluster.defaults['character_encoding']))
+                    session.send((line + '\n').encode(cluster.defaults['character_encoding']))
                 # Attempt to quietly consume output from the sent commands
                 time.sleep(0.2)
                 session.recv(65536)

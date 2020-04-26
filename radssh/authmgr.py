@@ -463,12 +463,12 @@ class AuthManager(object):
                             T.auth_publickey(auth_user, key)
                         else:
                             self.logger.error('Skipping SSH key %s (%s)', value, str(key))
-                    except paramiko.BadAuthenticationType as e:
+                    except paramiko.BadAuthenticationType:
                         # Server configured to reject keys, don't bother trying any others
                         return None
                 if T.is_authenticated():
                     return key
-            except paramiko.AuthenticationException as e:
+            except paramiko.AuthenticationException:
                 pass
 
         return None
@@ -493,7 +493,7 @@ if __name__ == '__main__':
                     try:
                         key = _importKey(keyfile, allow_prompt=False)
                         key_info = '%s (%s:%d bit)' % (keyfile, key.get_name(), key.get_bits())
-                    except Exception as e:
+                    except Exception:
                         key_info = '%s (Passphrase-Protected)' % (keyfile)
                 if not filter:
                     filter = '(ALL)'

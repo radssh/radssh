@@ -81,7 +81,7 @@ if __name__ == '__main__':
         try:
             import distro
             print('  %s (%s)' % (distro.linux_distribution()[0],
-                             '/'.join([fld for fld in distro.linux_distribution()[1:] if fld])))
+                  '/'.join([fld for fld in distro.linux_distribution()[1:] if fld])))
         except ImportError:
             print('  %s' % platform.platform())
     print('Encoding for stdout:', sys.stdout.encoding)
