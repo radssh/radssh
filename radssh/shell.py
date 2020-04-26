@@ -364,18 +364,18 @@ def radssh_shell_main():
                 try:
                     logger.info('Loading plugin module: %s', plugin)
                     this_plugin = radssh.plugins.load_plugin(os.path.join(plugin_dir, module))
-                    if hasattr(this_plugin, 'init'):
-                        logger.debug('Calling init method for plugin: %s', plugin)
-                        this_plugin.init(defaults=defaults, auth=a, plugins=loaded_plugins, star_commands=star.commands, shell=shell)
-                    if hasattr(this_plugin, 'star_commands'):
-                        logger.debug('Registering *commands for plugin: %s %s', plugin, this_plugin.star_commands.keys())
-                        star.commands.update(this_plugin.star_commands)
                     if hasattr(this_plugin, 'settings'):
                         prefix = 'plugin.%s.' % plugin
                         user_settings = {}
                         user_settings = dict([(k[len(prefix):], v) for k, v in defaults.items() if k.startswith(prefix)])
                         logger.info('Updating settings for plugin %s with: %s', plugin, user_settings)
                         this_plugin.settings.update(user_settings)
+                    if hasattr(this_plugin, 'init'):
+                        logger.debug('Calling init method for plugin: %s', plugin)
+                        this_plugin.init(defaults=defaults, auth=a, plugins=loaded_plugins, star_commands=star.commands, shell=shell)
+                    if hasattr(this_plugin, 'star_commands'):
+                        logger.debug('Registering *commands for plugin: %s %s', plugin, this_plugin.star_commands.keys())
+                        star.commands.update(this_plugin.star_commands)
                     if hasattr(this_plugin, 'command_listener'):
                         command_listeners.append(this_plugin.command_listener)
                     loaded_plugins[plugin] = this_plugin
