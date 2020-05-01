@@ -15,6 +15,26 @@ Class definition for converting a stream of input data into chunks,
 typically newline delimited, into a python queue object. Pushed
 data is acculumulated and delivered to the queue per selectable
 thresholds.
+
+This is a low-level class that allows async data from multiple sources
+(RadSSHConnections) to send stdout or stderr data as it is read off the
+network. The StreamBuffers linked to each RadSSHConnection will accumulate
+the data as it comes in, and only post to the console thread's listening
+queue in full line increments. The queue object may be omitted, which will
+make the StreamBuffer behave like an ordinary memory buffer that can be
+explicitly pulled to get access to the accumulated data.
+
+In general, lines of data are not pushed to the queue until a minimum number
+of bytes have been accumulated. This can be adjusted by the blocksize parameter
+and the sender can request an explicit flush of pending data by calling
+`push("")`, which will push any accumulated full lines of data, but if the last
+line is incomplete, it will be unsent.
+
+When the StreamBuffer is closed, all pending data will be flushed to the
+queue, regardless of size and regardless of whether or not a trailing newline
+is present at the end of the pushed data. Once closed, the StreamBuffer will
+raise an EOFError if more data is pushed. Pending data may be pulled after
+a close is issued.
 '''
 
 import queue
@@ -22,7 +42,8 @@ import queue
 
 class StreamBuffer(object):
     '''StreamBuffer Class'''
-    def __init__(self, queue=None, tag=None, delimiter=b'\n', blocksize=1024, presplit=False, encoding='utf-8'):
+    def __init__(self, queue=None, tag=None, delimiter=b'\n',
+                 blocksize=1024, presplit=False, encoding='utf-8'):
         if tag:
             self.tag = tag
         else:
@@ -46,15 +67,17 @@ class StreamBuffer(object):
             raise EOFError
         flush_needed = False
         if not isinstance(data, bytes):
-            # If we're fed some unicode string, normalize buffer content back to encoded bytes
+            # If we're fed some unicode string, normalize buffer content
+            # back to encoded bytes
             data = data.encode(self.encoding, 'xmlcharrefreplace')
+
         if data:
             self.buffer += data
             if len(self.buffer) - self.marker > self.blocksize:
                 flush_needed = True
         else:
-            # If empty push call, and there is queued data, flush what we collected
-            # regardless of blocksize length specified
+            # If empty push call, and there is queued data, flush what
+            # we collected, regardless of blocksize length specified
             if len(self.buffer) - self.marker > 0:
                 flush_needed = True
 
@@ -67,7 +90,8 @@ class StreamBuffer(object):
                 for x in lines[0:-1]:
                     self.line_count += 1
                     try:
-                        self.queue.put_nowait((self.tag, x.decode(self.encoding, 'replace')))
+                        data = x.decode(self.encoding, 'replace')
+                        self.queue.put_nowait((self.tag, data))
                     except queue.Full:
                         self.discards += 1
                 # Place back to a partial last line
@@ -78,7 +102,8 @@ class StreamBuffer(object):
                 pos = pending.rfind(self.delimiter)
                 if pos >= 0:
                     try:
-                        self.queue.put_nowait((self.tag, pending[:pos].decode(self.encoding, 'replace')))
+                        data = pending[:pos].decode(self.encoding, 'replace')
+                        self.queue.put_nowait((self.tag, data))
                     except queue.Full:
                         self.discards += 1
                     self.line_count += pending[:pos].count(self.delimiter)
@@ -97,12 +122,18 @@ class StreamBuffer(object):
         return data[:size]
 
     def rewind(self, position=0):
-        if position < 0 or position > len(self.buffer):
-            raise ValueError('Invalid rewind position %d: only range [0:%d] exists' % (position, len(self.buffer)))
+        if position < 0:
+            raise ValueError('Rewind position cannot be negative')
+        if position > len(self.buffer):
+            raise ValueError('Rewind position ({}) exceeds length ({})'.format(
+                             position, len(self.buffer)))
         self.pull_marker = position
 
     def close(self):
-        '''Signal end of writes - flushes queue but saves position for further pulls'''
+        '''
+        Signal end of writes - forces a queue flush, but
+        saves position for further pulls
+        '''
         if self.buffer and self.buffer[-1:] == self.delimiter:
             self.buffer = self.buffer[:-1]
         if self.queue and len(self.buffer) > self.marker:
@@ -110,7 +141,8 @@ class StreamBuffer(object):
             if len(self.buffer) > self.marker:
                 # Flush partial last line
                 pending = self.buffer[self.marker:]
-                self.queue.put((self.tag, pending.decode(self.encoding, 'replace')))
+                data = pending.decode(self.encoding, 'replace')
+                self.queue.put((self.tag, data))
                 self.line_count += 1
         self.marker = len(self.buffer)
         self.active = False
@@ -126,31 +158,3 @@ class StreamBuffer(object):
 
     def __str__(self):
         return '<%s-%s>' % (self.__class__.__name__, self.tag)
-
-
-if __name__ == '__main__':
-    q = queue.Queue()
-    b = StreamBuffer(q, tag='TestMode:', blocksize=20, presplit=True, encoding='utf-8')
-    print(b)
-    b.push(b'one\ntwo\nthree\nfour')
-    b.push(' - \u2119\u01b4\u2602\u210c\u00f8\u1f24')
-    try:
-        while True:
-            tag, text = q.get(block=False)
-            print(tag, text)
-    except queue.Empty:
-        print('-------\n')
-    b.push('...(line continuation for 4)\n\nCan I have\nA little more')
-    try:
-        while True:
-            tag, text = q.get(block=False)
-            print(tag, text)
-    except queue.Empty:
-        print('-------\n')
-    b.close()
-    try:
-        while True:
-            tag, text = q.get(block=False)
-            print(tag, text)
-    except queue.Empty:
-        print('-------\n')
