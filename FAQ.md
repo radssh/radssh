@@ -10,12 +10,12 @@ RadSSH Project
 
 #. How do I install RadSSH?
 
-   The preferred installation method is using the Python Installation Program, **pip**. If you have internet connectivity, **pip** should find everything it need on pypi.python.org.
+   The preferred installation method is using the Python Installation Program, **pip**. If you have internet connectivity, **pip** should find everything it need on pypi.python.org.  RadSSH has a hard dependency on Paramiko, and requires at least version 2.7 of Paramiko. In general, it is simpler to install Paramiko from your distribution package manager in order to handle Paramiko's own dependencies.
 
 #. What version(s) of Python does RadSSH work with?
 
-   RadSSH is primarily developed and tested under Python 2.6/2.7. It functions and has been tested to a lesser extent under Python 3.3. **pip** installation will convert the source using the Python **2to3** source conversion utility. The goal is to support any Python runtime version that is supported by Paramiko.
-
+   RadSSH is primarily developed and tested under Python 3.5 (as of RadSSH version 1.3.0). Support for earlier versions of Python is available by explicitly installing version 1.2.1, but no further development is planned for Pyhton2 support.
+   
 #. Does RadSSH work on Windows systems?
 
    YES! Starting with release 1.1.2, RadSSH should be fully compatible with Windows. Using the **colorama** module, the console formatting is now compatible with

@@ -10,9 +10,11 @@
 #
 
 '''
-PKCS - Encryption/Decryption helper derived from cryptography (or PyCrypto)
+PKCS - Encryption/Decryption helper derived from cryptography
 
-Uses a key (RSA) to encrypt and/or decrypt a short plaintext message, like a password.
+Uses a key (RSA) to encrypt and/or decrypt a short plaintext
+message (like a password). Not suitable for large messages, as
+maximum data length is determined by key size.
 
 See: http://tools.ietf.org/html/rfc3447
 '''
@@ -24,80 +26,49 @@ import warnings
 from .console import user_password
 
 
-try:
-    import cryptography
-    import cryptography.hazmat.backends
-    import cryptography.hazmat.primitives
-    from cryptography.hazmat.primitives import hashes
-    from cryptography.hazmat.primitives.serialization import load_ssh_public_key, load_pem_private_key
-    from cryptography.hazmat.primitives.asymmetric import padding
+import cryptography
+import cryptography.hazmat.backends
+import cryptography.hazmat.primitives
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import load_ssh_public_key, load_pem_private_key
+from cryptography.hazmat.primitives.asymmetric import padding
 
-    # Replace PyCrypto OAEP functionality with crytpography
-    # cryptography.io way - RSA private key object provides decrypt,
-    # public key object provides encrypt, but each needs a padding
-    # parameter of OAEP that needs to be constructed.
-    class PKCS1_OAEP(object):
-        def __init__(self, setup):
-            self.backend = cryptography.hazmat.backends.default_backend()
-            self.oaep = padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA1()),
-                algorithm=hashes.SHA1(),
-                label=None
-            )
-            if setup.keydata.startswith(b'ssh-rsa'):
-                self.private_key = None
-                self.public_key = load_ssh_public_key(setup.keydata, self.backend)
-            else:
-                try:
-                    self.private_key = load_pem_private_key(setup.keydata, password=setup.default_passphrase, backend=self.backend)
-                except TypeError:
-                    if setup.default_passphrase:
-                        # No need to interactively prompt - we failed
-                        raise
-                    passphrase = user_password('Enter passphrase for [%s]: ' % setup.keyfile)
-                    self.private_key = load_pem_private_key(setup.keydata, password=passphrase, backend=self.backend)
-                self.public_key = self.private_key.public_key()
-
-        def encrypt(self, msg):
-            return self.public_key.encrypt(msg, self.oaep)
-
-        def decrypt(self, data):
-            if not self.private_key:
-                raise PKCSError('Unable to decrypt - No private key')
-            return self.private_key.decrypt(data, self.oaep)
-
-
-except ImportError:
-    # Earlier versions of PyCrypto do not have PKCS1_OAEP
-    # Handle this gracefully by making the class still able to be instantiated
-    # but attempts to encrypt/decrypt raising exceptions instead of import or
-    # class constructor.
-    import Crypto.PublicKey.RSA as RSA
-    warnings.warn(Warning('PyCrypto module is no longer actively maintained - consider installing cryptography'))
-    try:
-        import Crypto.Cipher.PKCS1_OAEP
-        # Provide a wrapper around the base PyCrypto PKCS1_OAEP class
-        # PyCrypto way - instantiate a PCKS1_OAEP object with the RSA key
-        # (public or private) and the class provides encrypt/decrypt methods
-
-        def PKCS1_OAEP(setup):
-            # Construct the key object from the source - may need to prompt for passphrase
+# Replace PyCrypto OAEP functionality with crytpography
+# cryptography.io way - RSA private key object provides decrypt,
+# public key object provides encrypt, but each needs a padding
+# parameter of OAEP that needs to be constructed.
+class PKCS1_OAEP(object):
+    """
+    Low level class to perform PKCS primitives against cryptography backend
+    """
+    def __init__(self, setup):
+        self.backend = cryptography.hazmat.backends.default_backend()
+        self.oaep = padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA1()),
+            algorithm=hashes.SHA1(),
+            label=None
+        )
+        if setup.keydata.startswith(b'ssh-rsa'):
+            self.private_key = None
+            self.public_key = load_ssh_public_key(setup.keydata, self.backend)
+        else:
             try:
-                try:
-                    rsakey = RSA.importKey(setup.keydata, setup.default_passphrase)
-                except ValueError:
-                    if setup.default_passphrase:
-                        # No need to interactively prompt - we failed
-                        raise
-                    passphrase = user_password('Enter passphrase for [%s]: ' % setup.keyfile)
-                    rsakey = RSA.importKey(setup.keydata, passphrase)
-            except Exception as e:
-                raise PKCSError('Unable to load key - %s' % str(e))
-            return Crypto.Cipher.PKCS1_OAEP.new(rsakey)
+                self.private_key = load_pem_private_key(setup.keydata, password=setup.default_passphrase, backend=self.backend)
+            except TypeError:
+                if setup.default_passphrase:
+                    # No need to interactively prompt - we failed
+                    raise
+                passphrase = user_password('Enter passphrase for [%s]: ' % setup.keyfile)
+                self.private_key = load_pem_private_key(setup.keydata, password=passphrase, backend=self.backend)
+            self.public_key = self.private_key.public_key()
 
-    except ImportError:
-        warnings.warn(Warning('PyCrypto module does not support PKCS1_OAEP. Encrypt/Decrypt operations disabled'))
-        PKCS1_OAEP = None
+    def encrypt(self, msg):
+        return self.public_key.encrypt(msg, self.oaep)
+
+    def decrypt(self, data):
+        if not self.private_key:
+            raise PKCSError('Unable to decrypt - No private key')
+        return self.private_key.decrypt(data, self.oaep)
 
 
 class PKCSError(Exception):
@@ -130,7 +101,6 @@ class PKCS_OAEP(object):
         except IOError:
             self.cipher_object = None
             self.keydata = None
-        self.unsupported = not PKCS1_OAEP
 
     def _cipher(self):
         '''
@@ -140,8 +110,6 @@ class PKCS_OAEP(object):
         there is a more fundamental format issue with the key data, we encounter
         it here.
         '''
-        if not PKCS1_OAEP:
-            raise PKCSError('PKCS1_OAEP cipher unavailable in this version of PyCrypto')
         if self.cipher_object:
             return self.cipher_object
         if not self.keydata:

@@ -32,11 +32,7 @@ import netaddr
 import radssh
 import paramiko
 
-# Paramiko 2.0 switched dependency from PyCrypto to cryptography.io
-if paramiko.__version_info__ >= (2, 0):
-    import cryptography as crypto_module
-else:
-    import Crypto as crypto_module
+import cryptography as crypto_module
 
 
 def open_file(name):
