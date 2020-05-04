@@ -23,66 +23,191 @@ import base64
 import fnmatch
 import logging
 from collections import defaultdict
+import pathlib
+import hashlib
 
 import paramiko
 
-from .console import user_input
-
-# Keep a dict of the files we have loaded
-_loaded_files = {}
-_lock = threading.RLock()
-unconditional_add = False
+# from .console import user_input
 
 
-def printable_fingerprint(k):
-    '''Convert key fingerprint into OpenSSH printable format'''
-    fingerprint = k.get_fingerprint()
-    # Handle Python3 bytes or Python2 8-bit string style...
-    if isinstance(fingerprint[0], int):
-        seq = [int(x) for x in fingerprint]
-    else:
-        seq = [ord(x) for x in fingerprint]
-    return ':'.join(['%02x' % x for x in seq])
+key_generators = {
+    'ssh-rsa': paramiko.RSAKey,
+    'ssh-dss': paramiko.DSSKey,
+    'ssh-ed25519': paramiko.Ed25519Key,
+    'ecdsa-sha2-nistp256': paramiko.ECDSAKey,
+    'ecdsa-sha2-nistp384': paramiko.ECDSAKey,
+    'ecdsa-sha2-nistp521': paramiko.ECDSAKey,
+}
 
 
-def load(filename):
-    '''Load a known_hosts file, if not already loaded'''
-    filename = os.path.expanduser(filename)
-    with _lock:
-        if filename not in _loaded_files:
-            try:
-                _loaded_files[filename] = KnownHosts(filename)
-            except IOError as e:
-                logging.getLogger('radssh.keys').info('Unable to load known_hosts from %s: %s' % (filename, str(e)))
-                _loaded_files[filename] = KnownHosts()
-                _loaded_files[filename]._filename = filename
-    return _loaded_files[filename]
+class KnownHostsEntry():
+    """
+    Representation of a known_hosts file entry
+    An entry corresponds to a single line in a file, with the following fields:
+    (Optional) marker: @revoked or @cert-authority
+    hostnames: comma separated list of patterns
+    keytype: ssh-rsa, ssh-ecdsa-nistp256, etc.
+    keyvalue: base64 encoded public key value
+    (Optional) comment: remainder of line
+    """
+    def __init__(self, filename, linenumber, contents):
+        self.filename = filename
+        self.linenumber = linenumber
+        self.contents = contents
 
+        # If unable to interpret line, just keep it as a placeholder
+        self.marker_value = None
+        self.keytype = None
+        self.keyvalue = None
 
-def find_first_key(hostname, known_hosts_files=['~/.ssh/known_hosts'], port=22):
-    '''
-    Look for first matching host key in a sequence of known_hosts files
-    '''
-    for f in known_hosts_files:
-        x = load(f)
+        contents = contents.strip()
+        if not contents or contents.startswith("#"):
+            self.comment = contents
+            return
+        if contents.startswith("@"):
+            # Marker is present
+            fields = contents.split(None, 4)
+            if len(fields) == 4:
+                comment = ""
+                marker, patterns, keytype, keyvalue = fields
+            else:
+                marker, patterns, keytype, keyvalue, comment = fields
+            if marker not in ("@revoked", "@cert-authority"):
+                raise ValueError("[{}:{}] - Invalid marker: {}".format(
+                    filename, linenumber, marker
+                ))
+            self.marker_value = marker
+        else:
+            fields = contents.split(None, 3)
+            if len(fields) == 3:
+                comment = ""
+                patterns, keytype, keyvalue = fields
+            else:
+                patterns, keytype, keyvalue, comment = fields
+        if keytype not in key_generators:
+            return
         try:
-            entry = next(x.matching_keys(hostname, port))
-            return entry
-        except StopIteration:
-            pass
-    return None
+            self.keyblob = base64.b64decode(keyvalue)
+        except ValueError:
+            return
+
+        self.keytype = keytype
+
+        self.comment = comment
+        self.hashed_host = None
+        self.negations = []
+        self.patterns = []
+        self.hosts = []
+        # Filter each pattern as one of:
+        #   Negation: !pattern
+        #   HashedEntry: |pattern
+        #   WildcardEntry: contains "*" or "?"
+        #   ExactMatchEntry: everything else
+        for p in patterns.split(","):
+            if p.startswith("!"):
+                self.negations.append(p[1:])
+            elif p.startswith("|1|"):
+                self.hashed_host = p
+            elif "*" in p or "?" in p:
+                self.patterns.append(p)
+            else:
+                self.hosts.append(p)
+        # Defer decoding of key value until it is actually needed
+        self.key_value = None
+
+    @property
+    def marker(self):
+        return self.marker_value
+
+    def match(self, hostname):
+        """
+        Determine if the given 'hostname' matches this entry
+        Fails outright if it successfully matches a negation, otherwise
+        continue checking against explicit hosts, patterns or hashed_host
+        """
+        if not self.keytype:
+            # Skip any Comment/blank/unrecognizable lines
+            return False
+        for p in self.negations:
+            if fnmatch.fnmatch(hostname, p):
+                return False
+        if self.hashed_host:
+            # Hash given hostname with same salt to compare
+            x = paramiko.HostKeys.hash_host(hostname, self.hashed_host)
+            if x == self.hashed_host:
+                return True
+        if hostname in self.hosts:
+            return True
+        for p in self.patterns:
+            if fnmatch.fnmatch(hostname, p):
+                return True
+        return False
+
+    @property
+    def key(self):
+        if not self.keytype:
+            return None
+        if self.key_value:
+            return self.key_value
+        # Do the decode
+        self.key_value = key_generators[self.keytype](data=self.keyblob)
+        return self.key_value
+
+    def fingerprint(self, hash_algorithm="sha256"):
+        """
+        Printable fingerprint representation of the (public) key
+        Can be either SHA256 (default) or legacy MD5 fingerprint
+        """
+        if hash_algorithm == "sha256":
+            hashvalue = hashlib.sha256(self.key.asbytes()).digest()
+            return "SHA256:" + base64.b64encode(hashvalue).decode()
+        else:
+            hashvalue = hashlib.md5(self.key.asbytes()).digest()
+            return "MD5:" + ":".join(["%02x" % x for x in hashvalue])
 
 
-def find_all_keys(hostname, port=22):
-    '''
-    Generator to yield all matching keys from all loaded files.
-    If no files were loaded, autoload ~/.ssh/known_hosts
-    '''
-    if not _loaded_files:
-        load('~/.ssh/known_hosts')
-    for f in _loaded_files.values():
-        for key in f.matching_keys(hostname, port):
-            yield key
+class KnownHostsFile():
+    """
+    Load a known_hosts file contents, and build a list of KnownHostEntry
+    values for each line loaded from the file.
+    """
+    def __init__(self, filename):
+        self.filename=pathlib.Path(filename).expanduser()
+        self.entries = []
+        if not self.filename.exists():
+            return
+        for lineno, line in enumerate(open(self.filename), 1):
+            self.entries.append(KnownHostsEntry(self.filename, lineno, line))
+
+    def matching_keys(self, hostname):
+        """
+        Generator call for finding matching KnownHostEntry records for the
+        given hostname. For non-standard ports, the hostname should be
+        passed in as "[hostname]:NNNN". It is the responsibility of the
+        caller to pay heed to the entry marker value to determine if the
+        matched entry repesents a plain key, revoked key, or CA key.
+        """
+        for hostkey in self.entries:
+            if hostkey.match(hostname):
+                yield hostkey
+
+
+class KnownHostFileCache():
+    """
+    Keep loaded known_hosts files cached in a dict, and only load on first use
+    """
+    def __init__(self):
+        self.lock = threading.RLock()
+        self.entries = {}
+
+    def load(self, filename="~/.ssh/known_hosts"):
+        p = pathlib.Path(filename).expanduser()
+        # Use lock to prevent multiple threads from loading the same file
+        with self.lock:
+            if p not in self.entries:
+                self.entries[p] = KnownHostsFile(p)
+        return self.entries.get(p)
 
 
 def verify_transport_key(t, hostname, port, sshconfig):
@@ -158,269 +283,3 @@ def verify_transport_key(t, hostname, port, sshconfig):
         # Add host and IP entry as a single line
         if not add_key(','.join(entries), hostkey, False):
             raise Exception('Declined host key for %s - aborting connection' % ','.join(entries))
-
-
-class KnownHosts (object):
-    '''
-    Implementation of SSH known_hosts file as a searchable object.
-    Instead of Paramiko's lookup() returning a Dict (forcing a 1:1
-    relation of (host, key_type) to key), KnownHosts search is an
-    iterator of all matching keys, including support for markers
-    @revoked and @cert-authority. See sshd man page for details.
-    '''
-
-    def __init__(self, filename=None):
-        '''
-        Load known_hosts file, or create an empty dictionary
-        '''
-        self._lines = []
-        self._index = defaultdict(list)
-        self._hashed_hosts = []
-        self._wildcards = []
-        self._filename = filename
-        if filename is not None:
-            self.load(filename)
-
-    def add(self, hostname, key, hash_hostname=False):
-        '''
-        Add a host key entry to the table.  Any existing entries for
-        ``hostname`` pair will be preserved.  Deletion or replacement
-        is not implemented, but _lines entries can be flagged for
-        deletion by setting entry to None.
-        '''
-        # Per sshd man page on known_hosts:
-        # It is permissible (but not recommended) to have several lines or
-        # different host keys for the same names.
-        # So if called to add, it is not necessary to check for duplication
-        # here, and hope that the caller is handling conflicts.
-        with _lock:
-            lineno = len(self._lines)
-            keyval = key.get_base64()
-            keytype = key.get_name()
-            if hash_hostname or hostname.startswith('|'):
-                if not hostname.startswith('|'):
-                    # Add index entry for unhashed hostname
-                    self._index[hostname].append(lineno)
-                    hostname = paramiko.HostKeys.hash_host(hostname)
-                else:
-                    self._hashed_hosts.append((hostname, lineno))
-            else:
-                self._index[hostname].append(lineno)
-            self._lines.append('%s %s %s' %
-                               (hostname, keytype, keyval))
-            if self._filename:
-                self.save()
-        logging.getLogger('radssh.keys').info('Added new known_hosts entry for %s (%s) to %s' % (hostname, printable_fingerprint(key), self._filename))
-        return HostKeyEntry([hostname], key, lineno=lineno)
-
-    def load(self, filename):
-        '''
-        Load and index keys from OpenSSH known_hosts file. In order to
-        preserve lines, the text content is stored in a list (_lines),
-        and indexes are used to keep line number(s) per host, as well as
-        index lists for hashed hosts and wildcard matches, which would
-        both need to be sequentially scanned if the host is not found
-        in the primary index lookup.
-
-        If this method is called multiple times, the host keys are appended,
-        not cleared.  So multiple calls to `load` will produce a concatenation
-        of the loaded files, in order.
-        '''
-        offset = len(self._lines)
-        with open(filename, 'r') as f:
-            for lineno, line in enumerate(f):
-                self._lines.append(line.rstrip('\n'))
-                try:
-                    e = HostKeyEntry.from_line(line, lineno)
-                    if e is not None:
-                        # Just construct the host index entries during load
-                        # Identify as hashed entry, negation, wildcard, or regular
-                        # Keep the index by the source lineno (plus offset, if
-                        # loading multiple files), as the matching needs the
-                        # whole line for negation logic, and to pick up the
-                        # optional @marker...
-                        for h in e.hostnames:
-                            if h.startswith('|'):
-                                self._hashed_hosts.append((h, offset + lineno))
-                            elif h.startswith('!'):
-                                # negation - do not index
-                                pass
-                            elif '*' in h or '?' in h:
-                                self._wildcards.append((h, offset + lineno))
-                            else:
-                                self._index[h].append(offset + lineno)
-                except (UnreadableKey, TypeError):
-                    logging.getLogger('radssh.keys').error(
-                        'Skipping unloadable key line (%s:%d): %s' % (filename, lineno + 1, line))
-                    pass
-
-    def save(self, filename=None):
-        '''
-        Save host keys into a file, in the format used by OpenSSH.  Keys added
-        or modified after load will appear at the end of the file.  Original
-        lines will be preserved (format and comments).  If multiple files
-        were loaded, the saved file will be the concatenation of the loaded
-        source files.
-        '''
-        if not filename:
-            filename = self._filename
-        with open(filename, 'w') as f:
-            for line in self._lines:
-                if line is not None:
-                    f.write(line + '\n')
-
-    def matching_keys(self, hostname, port=22):
-        '''
-        Generator for identifying all the matching HostKey entries for
-        a given hostname or IP. Finds matches on exact lookup, hashed
-        lookup, and wildcard matching, and pays heed to negation entries.
-        '''
-        if hostname and port != 22:
-            hostname = '[%s]:%d' % (hostname, port)
-        for lineno in self._index[hostname]:
-            e = HostKeyEntry.from_line(self._lines[lineno], lineno, self._filename)
-            if e and not e.negated(hostname):
-                yield e
-        for h, lineno in self._hashed_hosts:
-            if h.startswith('|1|') and paramiko.HostKeys.hash_host(hostname, h) == h:
-                e = HostKeyEntry.from_line(self._lines[lineno], lineno, self._filename)
-                if e:
-                    yield e
-        for pattern, lineno in self._wildcards:
-            if HostKeyEntry.wildcard_match(hostname, pattern):
-                e = HostKeyEntry.from_line(self._lines[lineno], lineno, self._filename)
-                if e and not e.negated(hostname):
-                    yield e
-
-    def check(self, hostname, key):
-        '''
-        Return True if the given key is associated with the given hostname
-        for any non-negated matched line. If a marker is associated with the
-        line, the line does not qualify as a direct key comparison, as it
-        is either @revoked, or @cert-authority, which needs a different
-        comparison to check.
-        '''
-        for e in self.matching_keys(hostname):
-            if e.key.get_name() == key.get_name() and not e.marker:
-                if e.key.get_base64() == key.get_base64():
-                    return True
-        return False
-
-    def clear(self):
-        """
-        Remove all host keys from the dictionary.
-        """
-        self._lines = []
-        self._index = defaultdict(list)
-        self._hashed_hosts = []
-        self._wildcards = []
-
-    def conditional_add(self, host, key, hash_hostname=False):
-        '''
-        Add new host key, with confirmation by the user, which may be
-        Yes, No, or All (which auto-replies Yes to all subsequent calls)
-        '''
-        global unconditional_add
-        with _lock:
-            if unconditional_add:
-                self.add(host, key, hash_hostname)
-            else:
-                reply = ''
-                fingerprint = printable_fingerprint(key)
-                while reply.upper() not in ('Y', 'N', 'A'):
-                    reply = user_input('Accept new %s key with fingerprint [%s] for host %s ? (y/n/a) ' % (key.get_name(), fingerprint, host))
-                if reply.upper() == 'N':
-                    return False
-                if reply.upper() == 'A':
-                    unconditional_add = True
-                self.add(host, key, hash_hostname)
-        return True
-
-
-class UnreadableKey(Exception):
-    pass
-
-
-class HostKeyEntry:
-    '''
-    Close reimplementation of Paramiko HostKeys.HostKeyEntry, with added
-    support for markers (@revoked, @cert-authority), SSH1 key format, and
-    inclusion of line number for found matches.
-    '''
-
-    def __init__(self, hostnames=None, key=None, marker=None, lineno=None, filename=None):
-        self.hostnames = hostnames
-        self.key = key
-        self.marker = marker
-        self.lineno = lineno
-        self.filename = filename
-
-    @classmethod
-    def from_line(cls, line, lineno=None, filename=None):
-        '''
-        Parses the given line of text to find the name(s) for the host,
-        the type of key, and the key data.
-        '''
-        if not line or not line.strip():
-            return None
-        fields = line.strip().split(' ')
-        if not fields or fields[0].startswith('#'):
-            return None
-        if fields[0].startswith('@'):
-            marker = fields[0]
-            fields = fields[1:]
-        else:
-            marker = None
-
-        if len(fields) < 3:
-            raise UnreadableKey('Invalid known_hosts line', line, lineno)
-
-        names, keytype, key = fields[:3]
-        names = names.split(',')
-
-        # Decide what kind of key we're looking at and create an object
-        # to hold it accordingly.
-        key = key.encode('ascii')
-        # SSH-2 Key format consists of 2 (text) fields
-        #     keytype, base64_blob
-        try:
-            if keytype == 'ssh-rsa':
-                key = paramiko.RSAKey(data=base64.b64decode(key))
-            elif keytype == 'ssh-dss':
-                key = paramiko.DSSKey(data=base64.b64decode(key))
-            elif keytype == 'ecdsa-sha2-nistp256':
-                key = paramiko.ECDSAKey(data=base64.b64decode(key), validate_point=False)
-            else:
-                raise UnreadableKey('Invalid known_hosts line', line, lineno, filename)
-            return cls(names, key, marker, lineno, filename)
-        except Exception as e:
-            raise UnreadableKey('Invalid known_hosts line (%s)' % e, line, lineno, filename)
-
-    def negated(self, hostname):
-        '''
-        Check if the hostname is in the entry list of hostnames as a matching
-        negated pattern. This indicates that the key represented on the line
-        fails to match for the given host, even if it does match other pattern(s)
-        on the current line.
-        '''
-        for pattern in self.hostnames:
-            if pattern.startswith('!'):
-                if self.wildcard_match(hostname, pattern[1:]):
-                    return True
-        return False
-
-    @staticmethod
-    def wildcard_match(hostname, pattern):
-        '''
-        Match against patterns using '*' and '?' using simplified fnmatch
-        '''
-        # Simplified = add steps to disable fnmatch handling of [ and ]
-        fn_pattern = ''
-        for c in pattern:
-            if c == '[':
-                fn_pattern += '[[]'
-            elif c == ']':
-                fn_pattern += '[]]'
-            else:
-                fn_pattern += c
-        return fnmatch.fnmatch(hostname, fn_pattern)
