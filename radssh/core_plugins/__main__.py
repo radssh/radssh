@@ -28,8 +28,8 @@ import radssh.plugins
 
 def usage():
     print('Usage:')
-    print('    python -m radssh.plugins list [directory] ...')
-    print('    python -m radssh.plugins install [plugin_file|directory] ...')
+    print('    radplugins list [directory] ...')
+    print('    radplugins install [plugin_file|directory] ...')
 
 
 def install(plugin, dest):
@@ -91,7 +91,7 @@ def list_plugins(*args):
 subcommands = {'list': list_plugins, 'install': install_plugins}
 
 
-if __name__ == '__main__':
+def main():
     print('RadSSH Plugin Manager')
     if len(sys.argv) < 2 or sys.argv[1] not in subcommands:
         usage()

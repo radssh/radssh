@@ -151,7 +151,7 @@ __all__ = ['PKCSError', 'PKCS_OAEP']
 ##################################################################
 
 
-def main(args):
+def main():
     '''
     Command line processing: arguments processed in order, beginning in encrypt mode.
     Special arguments:
@@ -161,11 +161,17 @@ def main(args):
     All other command line arguments will be attempted to be used as
     plaintext or base64-encoded ciphertext for encrypt/decrypt calls.
     '''
+    import sys
+    if len(sys.argv) == 1:
+        print(__doc__)
+        print(main.__doc__)
+        sys.exit(0)
+
     encoding_mode = True
     pkcs = PKCS_OAEP()
     print('Using RSA keyfile: [%s]' % pkcs.keyfile)
 
-    for x in args:
+    for x in sys.argv[1:]:
         if x == '--decrypt' or x == '-d':
             print('Switching to Decrypt mode')
             encoding_mode = False
@@ -184,9 +190,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) > 1:
-        main(sys.argv[1:])
-    else:
-        print(__doc__)
-        print(main.__doc__)
+    main()

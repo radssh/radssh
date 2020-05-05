@@ -47,6 +47,19 @@ if sys.platform.startswith('win'):
     required_packages.append('colorama>=0.3.9')
     required_packages.append('pyreadline')
 
+
+# Script entry points
+entry_points = {
+    'console_scripts': [
+        'radssh=radssh.shell:radssh_shell_main',
+        'radpkcs=radssh.pkcs:main',
+        'radinfo=radssh.__main__:radinfo',
+        'radplugins=radssh.plugins.__main__:main',
+        'radcmdline=radssh.commandline:main'
+     ]
+}
+
+
 setup(name='radssh',
       version=radssh.version,
       description='RadSSH Module',
@@ -74,6 +87,7 @@ setup(name='radssh',
           'Topic :: Utilities'],
       packages=['radssh', 'radssh.plugins'],
       package_data={'': pkg_data_files},
+      entry_points = entry_points,
       install_requires=required_packages,
       long_description='''
 RadSSH Package
